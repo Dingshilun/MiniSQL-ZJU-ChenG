@@ -17,6 +17,7 @@ private:
 	int Delete(string tablename, vector<TreeNode> conditions);
 	int dropTable(string tablename);
 	int dropIndex(string indexname);
+	int Select(string tablename, vector<TreeNode> conditions);
 public:
 	API(catalogManager&tmp) :catlog(tmp) {}
 	~API(){
