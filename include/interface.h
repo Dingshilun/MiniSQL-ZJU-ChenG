@@ -1,6 +1,8 @@
 #ifndef __INTERFACE_H__
 #define __INTERFACE_H__
-
+#include<string>
+#include<vector>
+using namespace std;
 #define CREATE 	1001
 #define DROP	1002
 #define SELECT	1003
@@ -21,11 +23,11 @@ struct TreeNode{
 	Union value;
 };
 
-struct Definiton{
+typedef struct Def{
 	string var;
 	int type; //1: int; 2: char; 3: float
 	int len;
-};
+}Definition;
 
 class Interface{
 public:
