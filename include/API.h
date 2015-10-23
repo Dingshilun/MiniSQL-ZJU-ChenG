@@ -13,7 +13,7 @@ private:
 	/*recordmanager*/
 	int createTable(string tablename, list<attrNode> attributes);
 	int createIndex(string tablename, string indexname, int column);
-	int Insert(string tablename, list<string> attlist);
+	int Insert(string tablename, list<attrNode> attlist);
 	int Delete(string tablename, vector<TreeNode> conditions);
 	int dropTable(string tablename);
 	int dropIndex(string indexname);
