@@ -2,17 +2,11 @@
 #define __INTERPRETER_H__
 #include "miniSQL.h"
 #include "interface.h"
+#include "attrNode.h"
 #include <set>
 #include <vector>
 #include <string>
 #include <map>
-
-using namespace std;
-typedef struct AattrNode{
-	bool isPrimary, isUnique;
-	int lenth, type, offset;
-	string attrName;
-}attrNode;
 
 
 class BreakException{};

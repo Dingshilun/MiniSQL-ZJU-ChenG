@@ -187,29 +187,41 @@ Interface Interpreter::parse()
 					if(!regex_match(attribute[0], pattern))
 						throw SyntaxException(string("\'") + attribute[0] + "\' isn't a legal attribute name.");
 					
-					Definition def;
-					def.var = attribute[0];
+					attrNode attr;
+					attr.attrName = attribute[0];
 					if(attribute[1] == "int"){
-						if(attribute.size() != 2)
-							throw SyntaxException("INT attribute should be in the format: <attr_name> int.");
-						def.type = INT;
+						if(attribute.size() == 3 && attribute[2] != "unique")
+							throw SyntaxException("INT attribute should be in the format: <attr_name> int [unique].");
+						else if(attribute.size() == 3 && attribute[2] == "unique")
+							attr.isUnique = true;
+						else if(attribute.size() != 2)
+							throw SyntaxException("INT attribute should be in the format: <attr_name> int [unique].");
+						attr.type = INT;
 					}
 					else if(attribute[1] == "float"){
-						if(attribute.size() != 2)
-							throw SyntaxException("GLOAT attribute should be in the format: <attr_name> float.");
-						def.type = FLOAT;
+						if(attribute.size() == 3 && attribute[2] != "unique")
+							throw SyntaxException("FLOAT attribute should be in the format: <attr_name> float [unique].");
+						else if(attribute.size() == 3 && attribute[2] == "unique")
+							attr.isUnique = true;
+						else if(attribute.size() != 2)
+							throw SyntaxException("FLOAT attribute should be in the format: <attr_name> float [unique].");
+						attr.type = FLOAT;
 					}
 					else if(attribute[1] == "char"){
-						if(attribute.size() != 5 || attribute[2] != "(" || attribute[4] != ")")
-							throw SyntaxException("CHAR attribute should be in the format: <attr_name> char(<len>).");
+						if(attribute.size() == 6 && attribute[5] != "unique")
+							throw SyntaxException("CHAR attribute should be in the format: <attr_name> char(<len>) [unique].");
+						else if(attribute.size() == 6 && attribute[5] == "unique")
+							attr.isUnique = true;
+						else if(attribute.size() != 5 || attribute[2] != "(" || attribute[4] != ")")
+							throw SyntaxException("CHAR attribute should be in the format: <attr_name> char(<len>) [unique].");
 						regex integer("\\d+");
 						if(!regex_match(attribute[3], integer) || attribute[3].size() > 4)
 							throw SyntaxException(string("\'") + attribute[3] + "\' should be a positive integer less than 10000.");
 						int len = atoi(attribute[3].c_str());
 						if(len == 0)
 							throw SyntaxException(string("\'") + attribute[3] + "\' should be a positive integer less than 10000.");
-						def.type = STRING;
-						def.len = len;
+						attr.type = STRING;
+						attr.length = len;
 					}
 					else 
 						throw SyntaxException(string("\'") + attribute[1] + "\' unknown type.");

@@ -13,7 +13,7 @@ struct Union{
 
 struct TreeNode{
 	int id = -1;
-	int type = =;
+	int type = 0;
 	int op = 0; //0: =; 1: <>; 2: <; 3: >; 4: <=; 5: >=;
 	Union value;
 };
@@ -35,8 +35,14 @@ public:
 	int getPrimaryKeyIndex(){
 		return pkey;
 	}
-	Definition getPrimaryKey(){
+	attrNode getPrimaryKey(){
 		return definitions[pkey];
+	}
+	attrNode getAttrNode(int i){
+		return definitions[i];
+	}
+	vector<attrNode> getDefinitions(){
+		return definitions;
 	}
 	string indexOnWhichTable(){
 		return tableName;
@@ -83,12 +89,16 @@ public:
 	void setColumn(int i){
 		column = i;
 	}
-	void addDefinition(Definition def){
+	void addDefinition(attrNode def){
 		definitions.push_back(def);
 	}
 	int findIndexOfDef(string name){
 		for(int i = 0; i < definitions.size(); ++i)
-			if(definitions[i].var == name) return i;
+			if(definitions[i].var == name){
+				definitions[i].isPrimary = true;
+				definitions[i].isUnique = true;
+				return i;
+			}
 		return -1;
 	}
 	void setPrimaryKeyIndex(int index){
@@ -102,8 +112,7 @@ private:
 	vector<TreeNode> conditions; 	//delete from <tableName> where <conditions>
 									//select * from <tableName> where <conditions>
 	int pkey;
-	vector<Definition> definitions; //create <object(table)> <definitions> primary key definitions[<pkey>]
-	
+	vector<attrNode> definitions; //create <object(table)> <definitions> primary key definitions[<pkey>]
 	int column;	//create <object(index)> on <tableName>(<column>)
 	vector<Union> data;	//insert <data> into <tableName> 
 	//drop <object> <name>
