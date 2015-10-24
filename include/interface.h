@@ -1,33 +1,28 @@
 #ifndef __INTERFACE_H__
 #define __INTERFACE_H__
-#include<string>
-#include<vector>
+#include "miniSQL.h"
+#include <string>
+#include <vector>
 using namespace std;
-#define CREATE 	1001
-#define DROP	1002
-#define SELECT	1003
-#define INSERT	1004
-#define DELETE	1005
-#define TABLE	1051
-#define INDEX	1052
-
-union Union{
-		char *s;
-		int n;
-		float f;
+struct Union{
+	bool isNull = false;
+	string s = "";
+	int n = 0;
+	float f = 0.0;
 };
 
 struct TreeNode{
-	string var;
-	int op; //0: =; 1: <>; 2: <; 3: >; 4: <=; 5: >=;
+	int id = -1;
+	int type = =;
+	int op = 0; //0: =; 1: <>; 2: <; 3: >; 4: <=; 5: >=;
 	Union value;
 };
 
-typedef struct Def{
-	string var;
-	int type; //1: int; 2: char; 3: float
-	int len;
-}Definition;
+struct Definition{
+	string var = "";
+	int type = 0; //1: int; 2: char; 3: float
+	int len = 0;
+};
 
 class Interface{
 public:
@@ -46,7 +41,7 @@ public:
 	string indexOnWhichTable(){
 		return tableName;
 	}
-	Definition indexOnWhichColumn(){
+	int indexOnWhichColumn(){
 		return column;
 	}
 	string getIndexName(){
@@ -67,6 +62,38 @@ public:
 	Union getDatumByIndex(int index){
 		return data[index];
 	}
+	void setOperation(int i){
+		operation = i;
+	}
+	void setObject(int i){
+		object = i;
+	}
+	void setTableName(string name){
+		tableName = name;
+	}
+	void setIndexName(string name){
+		indexName = name;
+	}
+	void addCondition(TreeNode t){
+		conditions.push_back(t);
+	}
+	void addData(Union u){
+		data.push_back(u);
+	}
+	void setColumn(int i){
+		column = i;
+	}
+	void addDefinition(Definition def){
+		definitions.push_back(def);
+	}
+	int findIndexOfDef(string name){
+		for(int i = 0; i < definitions.size(); ++i)
+			if(definitions[i].var == name) return i;
+		return -1;
+	}
+	void setPrimaryKeyIndex(int index){
+		pkey = index;
+	}
 private:
 	int operation;	//create, drop, select, insert, delete
 	int object;		//table, index
@@ -77,7 +104,7 @@ private:
 	int pkey;
 	vector<Definition> definitions; //create <object(table)> <definitions> primary key definitions[<pkey>]
 	
-	Definition column;	//create <object(index)> on <tableName>(<column>)
+	int column;	//create <object(index)> on <tableName>(<column>)
 	vector<Union> data;	//insert <data> into <tableName> 
 	//drop <object> <name>
 };
