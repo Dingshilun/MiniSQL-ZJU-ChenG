@@ -39,6 +39,7 @@ class Target
 private:
 	string table;
 	string attribute;
+	T key,value;
 	T beginKey;
 	T endKey;
 	bool isSingle;
@@ -51,6 +52,8 @@ public:
 	void setAttribute( string name );
 	void setBeginKey( T x );
 	void setEndKey( T x );
+	void setKey(T x);
+	void setvalue(T x);
 	string getTable();
 	strinng getAttribute();
 	T getKey();

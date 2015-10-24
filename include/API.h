@@ -5,6 +5,7 @@
 #include"IndexManager.h"
 #include"string"
 #include"iostream"
+#include<map>
 typedef struct aav
 {
 	bool isPrimary, isUnique;
@@ -17,11 +18,12 @@ class API
 {
 private:
 	catalogManager& catlog;
-	IndexManager *indexmanager;
+	IndexManager indexmanager;
+	map<string, vector<attrNode>*> AttrTable;
 	/*recordmanager*/
 	int createTable(string tablename, list<attrNode> attributes);
-	int createIndex(string tablename, string indexname, int column);
-	int Insert(string tablename, list<attrAndvalue> attlist);
+	int createIndex(string tablename, string indexname, string attribute,int column);
+	int Insert(string tablename, list<attrAndvalue> attlist,list<TreeNode> conditions);
 	int Delete(string tablename, vector<TreeNode> conditions);
 	int dropTable(string tablename);
 	int dropIndex(string indexname);
@@ -29,7 +31,7 @@ private:
 public:
 	API(catalogManager&tmp) :catlog(tmp) {}
 	~API(){
-		if (indexmanager) delete indexmanager;
+		
 	}
 	int exec(Interface inter);
 
