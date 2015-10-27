@@ -31,7 +31,7 @@ class catalogManager
     
     int getRecordNum(string tablename);//返回条目数量
     bool deleteTable(string tablename);
-    bool createIndex(string indexname,string tablename);
+    bool deleteIndex(string indexname,string tablename);
     bool recordDelete(string tablename,int num);//删除条目数量，删除成功返回1
     bool recordAdd(string tablename,int num);
 
