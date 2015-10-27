@@ -27,6 +27,7 @@ class catalogManager
     int getAttrNum(string tablename,string attrname);
     list<attrNode> getAttrList(string tablename);
     attrNode getAttrInfo(string tablename,string attrname);
+    list<string> getIndexOfTable(string tablename);
     
     int getRecordNum(string tablename);//返回条目数量
     bool deleteTable(string tablename);

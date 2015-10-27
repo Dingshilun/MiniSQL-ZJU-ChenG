@@ -2,7 +2,7 @@
 #define __recordManager_H__
 
 #include <string>
-
+#include "API.h"
 #include "bufferManager.h"
 #include "interface.h"
 
@@ -28,9 +28,9 @@ private:
 	string table_name;
 
 public:
-	recorcManager(string t_name):table_name(t_name){
+	recordManager(string t_name):table_name(t_name){
 	}
-	~recorcManager();
+	~recordManager();
 
 	int select(int r_length, vector<TreeNode> &v_tn, vector<attrNode> &v_an, vector < vector <index_info> > &vv_ii);
 		/* v_an 提供该表所有属性信息 */
