@@ -98,17 +98,34 @@ int Interpreter::split(string line)
 		}
 		else if(t == "\'"){	//'something'
 			j++;
-			while(j < line.size() && line[j] != '\'') j++;
-			t += line.substr(i, j - i);
+			while(j < line.size() && line[j] != '\''){
+				if(line[j] == '\\'){
+					if(j + 1 < line.size()){
+						j++;
+					}
+				}
+				t += line[j];
+				j++;
+			}
 			if(j != line.size()) t += '\'';
+			else 
+				throw SyntaxException("quotes should be in the same line.");
 			i = j + 1;
 		}
 		else if(t == "\""){	//"something"->'something'
 			j++;
-			while(j < line.size() && line[j] != '\"') j++;
-			t = "\'";
-			t += line.substr(i, j - i);
+			while(j < line.size() && line[j] != '\"'){
+				if(line[j] == '\\'){
+					if(j + 1 < line.size()){
+						j++;
+					}
+				}
+				t += line[j];
+				j++;
+			}
 			if(j != line.size()) t += '\'';
+			else 
+				throw SyntaxException("quotes should be in the same line.");
 			i = j + 1;
 		}
 		if(t == ";") return i;
@@ -348,6 +365,10 @@ Interface Interpreter::parse()
 					if(values[i].size() <= 1 || values[i][0] != '\'' || values[i][values[i].size() - 1] != '\'')
 						throw SyntaxException(values[i] + " can't be identified as a string.");
 					string s = values[i].substr(1, values[i].size() - 2);
+					attrNode attr = catalog.getAttrInfo(table, condition[0]);
+					int len = attr.length;
+					if(s.size() > len)
+						throw SyntaxException(condition[2] + " is oversized.");
 					u.s = s;
 				}
 			}
