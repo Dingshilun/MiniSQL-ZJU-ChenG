@@ -5,7 +5,7 @@
 using namespace std;
 typedef struct AattrNode
 {
-    bool isPrimary,isUnique,hasIndex,isNull;
+    bool isPrimary,isUnique,hasIndex;
     int length,type,offset;//type={MINI_FLOAT,MINI_INT,MINI_STRING}
     string attrName;
 }attrNode;
