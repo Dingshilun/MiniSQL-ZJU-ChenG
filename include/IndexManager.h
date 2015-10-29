@@ -17,7 +17,7 @@ private:
 	map< string, BplusTree > indexTable; //store the B+ tree list
 public:
 	bool createIndex( Target t, string indexName );
-	indexResult* searchSingle( Target t ); 
+	vector<index_info>& searchSingle( Target t ); 
 	bool insert( Target t );
 	bool deleteKey( Target t );
 	bool deleteIndex( Target t );
@@ -59,6 +59,7 @@ public:
 	void setindex_info(index_info tmp);
 	string getTable();
 	strinng getAttribute();
+	index_info getIndexInfo();
 	T getKey();
 	T getBeginKey();
 	T getEndKey();
@@ -76,11 +77,11 @@ public:
 	BplusTree();
 	~BplusTree();
 	bool isEmpty();
-	bool insert( T target, ??? ); //'???' should be the address of the record in the database file
-	bool delete( T target, ??? );
-	bool deleteIndex();
-	IndexNode rangeSearch( T beginTarget, T endTarget );
-	IndexNode singleSearch( T target ); 
+	bool insert( T target ); //T.getIndexInfo() returns index_info
+	bool delete( T target ); 
+	bool deleteIndex(string indexname);
+	vector<index_info>& rangeSearch( T beginTarget, T endTarget );
+	vector<index_info>& singleSearch( T target ); 
 };
 
 template < class T >
@@ -104,7 +105,7 @@ public:
 
 template< class T >
 class LeafNode:public InteriorNode
-{ 
+{  
 private:
 	vector<int> blockNumber;
 	vector<int> offset;
