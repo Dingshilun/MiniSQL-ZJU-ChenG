@@ -4,8 +4,11 @@
 #include <map>
 using namespace std;
 
-#define SEARCHSINGLE 0
-#define
+#define SINGLE 0
+#define LARGER 1
+#define NOTLESS 2
+#define NOTLARGER 3
+#define LESS 4
 
 class IndexManager
 {
@@ -39,13 +42,11 @@ class Target
 private:
 	string table;
 	string attribute;
-	T beginKey;
-	T endKey;
-	bool isSingle;
+	T Key;
+	int type;
 public:
 	Target( string t, string a )
 	Target( string t, string a, T x );
-	Target( string t, string a, T x, T y );
 	~Target();
 	void setTable( string name );
 	void setAttribute( string name );
