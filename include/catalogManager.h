@@ -14,21 +14,21 @@ class catalogManager
 	
     //需要的接口
     //1成功,0失败(返回bool)，-1不存在(如果返回值int)
-    bool createTable(string tablename,list<AttrNode> attrlist);
+    bool createTable(string tablename,vector<attrNode> attrlist);
     bool createIndex(string indexname,string tablename,int columns);//columns:第几列的属性需要index
     bool doesTableExist(string tablename);
     bool doesIndexExist(string indexname);
     indexNode findindex(string indexname);
     bool doesAttrExist(string tablename,string attrname);
-    bool isAttrUnique(string tablename,attrname);
+    bool isAttrUnique(string tablename,string attrname);
     int getAttrType(string tablename,string attrname);
     int getAttrOffset(string tablename,string attrname);
     int getAttrLength(string tablename,string attrname);
     int getAttrNum(string tablename,string attrname);
-    list<attrNode> getAttrList(string tablename);
+    vector<attrNode> getAttrList(string tablename);
     attrNode getAttrInfo(string tablename,string attrname);
-    list<string> getIndexOfTable(string tablename);
-    string getIndexByAttrID(int column);
+    vector<string> getIndexOfTable(string tablename);
+    string getIndexByAttrID(string tablename,int column);
 
     int getRecordNum(string tablename);//返回条目数量
     bool deleteTable(string tablename);
