@@ -1,18 +1,19 @@
+/*
+ * 文件命名规则：表名.tbl   索引名-表名.idx
+ */
+
 #ifndef _catalogManager_h_
 #define _catalogManager_h_
 #include<attrNode.h>
 //#include<indexNode.h>
-
 #include <string>
-#include <vector>
-
+#include <list>
 
 class indexNode
 {
 public:
 	indexNode()
 	{
-
 	}
 	indexNode(std::string tablename,std::string indexname,std::string attrname)
 	{
@@ -46,7 +47,7 @@ public:
 	{
 		this->recordNum = 0;
 	}
-	TableNode(std::string tablename, std::vector<attrNode> attrlist, int recordnum)
+	TableNode(std::string tablename, std::list<attrNode> attrlist, int recordnum)
 	{
 		this->tableName = tablename;
 		this->attrList = attrlist;
@@ -54,12 +55,12 @@ public:
 	}
 
 	std::string tableName;
-	std::vector<attrNode> attrList;
+	std::list<attrNode> attrList;
 	int recordNum;
 	friend std::ostream& operator<<(std::ostream& out, const TableNode& node)
 	{
 		out << node.tableName << '\t' << node.recordNum << '\t' << node.attrList.size() << endl;
-		for (vector<attrNode>::const_iterator aite = node.attrList.begin(); aite != node.attrList.end(); ++aite)
+		for (list<attrNode>::const_iterator aite = node.attrList.begin(); aite != node.attrList.end(); ++aite)
 		{
 			out << aite->isPrimary << '\t' << aite->isUnique << '\t' << aite->hasIndex << '\t' << aite->length << '\t' << aite->type << '\t' << aite->offset << '\t' << aite->attrName << endl;
 		}
@@ -74,7 +75,7 @@ public:
 		if (s < 0)
 			return in;
 		node.attrList.resize(s);
-		for (std::vector<attrNode>::iterator aite = node.attrList.begin(); aite != node.attrList.end(); ++aite)
+		for (std::list<attrNode>::iterator aite = node.attrList.begin(); aite != node.attrList.end(); ++aite)
 		{
 			in >> aite->isPrimary >> aite->isUnique >> aite->hasIndex >> aite->length >> aite->type >> aite->offset >> aite->attrName;
 		}
@@ -85,8 +86,8 @@ public:
 class catalogManager
 {
 private:
-	std::vector<TableNode> tableList;
-	std::vector<indexNode> indexList;
+	std::list<TableNode> tableList;
+	std::list<indexNode> indexList;
 public:
 	//构造函数	
 	catalogManager();
@@ -96,10 +97,8 @@ public:
 	
 	//需要的接口
 	//1成功,0失败(返回bool)，-1不存在(如果返回值int)
-	bool createTable(string tablename, vector<attrNode> attrlist);
-	
+	bool createTable(string tablename, list<attrNode> attrlist);	
 	bool createIndex(string indexname, string tablename, int columns);//columns:第几列的属性需要index
-	
 	bool doesTableExist(string tablename);
 	bool doesIndexExist(string indexname, string tablename);
 	indexNode findindex(string indexname,string tablename);
@@ -109,9 +108,9 @@ public:
 	int getAttrOffset(string tablename, string attrname);
 	int getAttrLength(string tablename, string attrname);
 	int getAttrNum(string tablename, string attrname);
-	vector<attrNode> getAttrList(string tablename);
+	list<attrNode> getAttrList(string tablename);
 	attrNode getAttrInfo(string tablename, string attrname);
-	vector<string> getIndexOfTable(string tablename);
+	list<string> getIndexOfTable(string tablename);
 	int getRecordNum(string tablename);//返回条目数量
 	bool deleteTable(string tablename);
 	bool deleteIndex(string indexname, string tablename);

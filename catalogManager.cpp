@@ -8,7 +8,6 @@ catalogManager::catalogManager()
 {
 }
 
-
 catalogManager::~catalogManager()
 {
 }
@@ -33,10 +32,8 @@ void catalogManager::readCatalog()
 			{
 				cerr << e.what() << endl;
 			}
-
 			logfile.close();
-		}
-		
+		}		
 	}
 	logfile.open("indexLog.log", ios::in);
 	if (logfile.good())
@@ -63,7 +60,7 @@ void catalogManager::writeCatalog()
 	}
 }
 
-bool catalogManager::createTable(string tablename, vector<attrNode> attrlist)
+bool catalogManager::createTable(string tablename, list<attrNode> attrlist)
 {
 	fstream tablefile;
 	tablefile.open(tablename + ".tbl", ios::in);
@@ -97,17 +94,18 @@ bool catalogManager::createIndex(string indexname, string tablename, int columns
 		indexfile.close();
 		//find attrName of column
 		string attrname;
-		vector<TableNode>::iterator tite;
-		vector<AattrNode>::iterator aite;
+		list<TableNode>::iterator tite;
+		list<AattrNode>::iterator aite;
 		for (tite = this->tableList.begin(); tite != this->tableList.end(); ++tite)
 		{
 			if (tite->tableName == tablename)
 			{
-				attrname = tite->attrList[columns].attrName;
-				break;
+				aite = tite->attrList.begin();
+				for (int i = 0; i < columns; ++i)
+					++aite;
+				attrname = aite->attrName;
 			}
 		}
-
 		indexNode node(tablename, indexname, attrname);
 		this->indexList.push_back(node);
 		return true;
@@ -116,7 +114,7 @@ bool catalogManager::createIndex(string indexname, string tablename, int columns
 
 bool catalogManager::doesTableExist(string tablename)
 {
-	vector<TableNode>::iterator tite;
+	list<TableNode>::iterator tite;
 	for (tite = this->tableList.begin(); tite != this->tableList.end(); ++tite)
 	{
 		if (tite->tableName == tablename)
@@ -129,7 +127,7 @@ bool catalogManager::doesTableExist(string tablename)
 
 bool catalogManager::doesIndexExist(string indexname, string tablename)
 {
-	vector<indexNode>::iterator iite;
+	list<indexNode>::iterator iite;
 	for (iite = this->indexList.begin(); iite != this->indexList.end(); ++iite)
 	{
 		if (iite->indexName == indexname&&iite->tableName == tablename)
@@ -140,7 +138,7 @@ bool catalogManager::doesIndexExist(string indexname, string tablename)
 
 indexNode catalogManager::findindex(string indexname,string tablename)
 {
-	vector<indexNode>::iterator iite;
+	list<indexNode>::iterator iite;
 	for (iite = this->indexList.begin(); iite != this->indexList.end(); ++iite)
 	{
 		if (iite->indexName == indexname&&iite->tableName == tablename)
@@ -150,8 +148,8 @@ indexNode catalogManager::findindex(string indexname,string tablename)
 
 bool catalogManager::doesAttrExist(string tablename, string attrname)
 {
-	vector<TableNode>::iterator tite;
-	vector<AattrNode>::iterator aite;
+	list<TableNode>::iterator tite;
+	list<AattrNode>::iterator aite;
 	for (tite = this->tableList.begin(); tite != this->tableList.end(); ++tite)
 	{
 		if (tite->tableName == tablename)
@@ -168,8 +166,8 @@ bool catalogManager::doesAttrExist(string tablename, string attrname)
 
 bool catalogManager::isAttrUnique(string tablename, string attrname)
 {
-	vector<TableNode>::iterator tite;
-	vector<AattrNode>::iterator aite;
+	list<TableNode>::iterator tite;
+	list<AattrNode>::iterator aite;
 	for (tite = this->tableList.begin(); tite != this->tableList.end(); ++tite)
 	{
 		if (tite->tableName == tablename)
@@ -188,8 +186,8 @@ bool catalogManager::isAttrUnique(string tablename, string attrname)
 
 int catalogManager::getAttrType(string tablename, string attrname)
 {
-	vector<TableNode>::iterator tite;
-	vector<AattrNode>::iterator aite;
+	list<TableNode>::iterator tite;
+	list<AattrNode>::iterator aite;
 	for (tite = this->tableList.begin(); tite != this->tableList.end(); ++tite)
 	{
 		if (tite->tableName == tablename)
@@ -206,8 +204,8 @@ int catalogManager::getAttrType(string tablename, string attrname)
 
 int catalogManager::getAttrOffset(string tablename, string attrname)
 {
-	vector<TableNode>::iterator tite;
-	vector<AattrNode>::iterator aite;
+	list<TableNode>::iterator tite;
+	list<AattrNode>::iterator aite;
 	for (tite = this->tableList.begin(); tite != this->tableList.end(); ++tite)
 	{
 		if (tite->tableName == tablename)
@@ -223,8 +221,8 @@ int catalogManager::getAttrOffset(string tablename, string attrname)
 }
 int catalogManager::getAttrLength(string tablename, string attrname)
 {
-	vector<TableNode>::iterator tite;
-	vector<AattrNode>::iterator aite;
+	list<TableNode>::iterator tite;
+	list<AattrNode>::iterator aite;
 	for (tite = this->tableList.begin(); tite != this->tableList.end(); ++tite)
 	{
 		if (tite->tableName == tablename)
@@ -239,10 +237,10 @@ int catalogManager::getAttrLength(string tablename, string attrname)
 	return -1;//not found
 }
 
-vector<attrNode> catalogManager::getAttrList(string tablename)
+list<attrNode> catalogManager::getAttrList(string tablename)
 {
-	vector<TableNode>::iterator tite;
-	vector<AattrNode>::iterator aite;
+	list<TableNode>::iterator tite;
+	list<AattrNode>::iterator aite;
 	for (tite = this->tableList.begin(); tite != this->tableList.end(); ++tite)
 	{
 		if (tite->tableName == tablename)
@@ -250,13 +248,12 @@ vector<attrNode> catalogManager::getAttrList(string tablename)
 			return tite->attrList;
 		}
 	}
-
 }
 
 attrNode catalogManager::getAttrInfo(string tablename, string attrname)
 {
-	vector<TableNode>::iterator tite;
-	vector<AattrNode>::iterator aite;
+	list<TableNode>::iterator tite;
+	list<AattrNode>::iterator aite;
 	for (tite = this->tableList.begin(); tite != this->tableList.end(); ++tite)
 	{
 		if (tite->tableName == tablename)
@@ -270,10 +267,10 @@ attrNode catalogManager::getAttrInfo(string tablename, string attrname)
 	}
 }
 
-vector<string> catalogManager::getIndexOfTable(string tablename)
+list<string> catalogManager::getIndexOfTable(string tablename)
 {
-	vector<indexNode>::iterator iite;
-	vector<string> sv;
+	list<indexNode>::iterator iite;
+	list<string> sv;
 	for (iite = this->indexList.begin(); iite != this->indexList.end(); ++iite)
 	{
 		if (iite->tableName == tablename)
@@ -284,7 +281,7 @@ vector<string> catalogManager::getIndexOfTable(string tablename)
 
 int catalogManager::getRecordNum(string tablename)//返回条目数量
 {
-	vector<TableNode>::iterator tite;
+	list<TableNode>::iterator tite;
 	for (tite = this->tableList.begin(); tite != this->tableList.end(); ++tite)
 	{
 		if (tite->tableName == tablename)
@@ -297,8 +294,8 @@ int catalogManager::getRecordNum(string tablename)//返回条目数量
 
 int catalogManager::getAttrNum(string tablename, string attrname)
 {
-	vector<TableNode>::iterator tite;
-	vector<AattrNode>::iterator aite;
+	list<TableNode>::iterator tite;
+	list<AattrNode>::iterator aite;
 	int num = 0;
 	for (tite = this->tableList.begin(); tite != this->tableList.end(); ++tite)
 	{
@@ -317,7 +314,7 @@ int catalogManager::getAttrNum(string tablename, string attrname)
 
 bool catalogManager::deleteIndex(string indexname, string tablename)
 {
-	vector<indexNode>::iterator iite;
+	list<indexNode>::iterator iite;
 	for (iite = this->indexList.begin(); iite != this->indexList.end();)
 	{
 		if (iite->tableName == tablename&&iite->attribute == indexname)
@@ -337,7 +334,7 @@ bool catalogManager::deleteIndex(string indexname, string tablename)
 
 bool catalogManager::deleteTable(string tablename)
 {
-	vector<TableNode>::iterator tite;
+	list<TableNode>::iterator tite;
 	for (tite = this->tableList.begin(); tite != this->tableList.end(); )
 	{
 		if (tite->tableName == tablename)
@@ -351,7 +348,7 @@ bool catalogManager::deleteTable(string tablename)
 			++tite;
 		}
 	}
-	vector<indexNode>::iterator iite;
+	list<indexNode>::iterator iite;
 	for (iite = this->indexList.begin(); iite != this->indexList.end();)
 	{
 		if (iite->tableName == tablename)
@@ -370,7 +367,7 @@ bool catalogManager::deleteTable(string tablename)
 
 bool catalogManager::recordDelete(string tablename, int num)//删除条目数量，删除成功返回1
 {
-	vector<TableNode>::iterator tite;
+	list<TableNode>::iterator tite;
 	for (tite = this->tableList.begin(); tite != this->tableList.end(); ++tite)
 	{
 		if (tite->tableName == tablename)
@@ -383,7 +380,7 @@ bool catalogManager::recordDelete(string tablename, int num)//删除条目数量，删除
 }
 bool catalogManager::recordAdd(string tablename, int num)
 {
-	vector<TableNode>::iterator tite;
+	list<TableNode>::iterator tite;
 	for (tite = this->tableList.begin(); tite != this->tableList.end(); ++tite)
 	{
 		if (tite->tableName == tablename)
