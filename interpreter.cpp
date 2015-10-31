@@ -152,8 +152,8 @@ Interface Interpreter::parse()
 				throw SyntaxException("index \'" + statement[2] + "\' has already existed.");
 			if(!catalog.doesAttrExist(statement[4], statement[6]))
 				throw SyntaxException("column \'" + statement[6] + "\' not found");
-			interface.setOperation(CREATE);
-			interface.setObject(INDEX);
+			interface.setOperation(MINI_CREATE);
+			interface.setObject(MINI_INDEX);
 			interface.setTableName(statement[4]);
 			interface.setIndexName(statement[2]);
 			interface.setColumn(getAttrNum(statement[4], statement[6]));
@@ -246,8 +246,8 @@ Interface Interpreter::parse()
 					interface.addDefinition(def);
 				}	
 			}
-			interface.setOperation(CREATE);
-			interface.setObject(TABLE);
+			interface.setOperation(MINI_CREATE);
+			interface.setObject(MINI_TABLE);
 			interface.setTableName(statement[2]);
 		}
 	}
@@ -257,14 +257,14 @@ Interface Interpreter::parse()
 		//exactly 3 words
 		if(statement.size() != 3)
 			throw SyntaxException("too many or too few words in this statement.");
-		interface.setOperation(DROP);
+		interface.setOperation(MINI_DROP);
 
 		//drop table
 		if(statement[1] == "table"){
 			if(!catalog.doesTableExist())
 				throw SyntaxException(string("table \'") + statement[2] + "\' not found.");
 			else{
-				interface.setObject(TABLE);
+				interface.setObject(MINI_TABLE);
 				interface.setTableName(statement[2]);
 			}
 		}
@@ -273,7 +273,7 @@ Interface Interpreter::parse()
 			if(!catalog.doesIndexExist())
 				throw SyntaxException(string("index \'") + statement[2] + "\' not found.");
 			else{
-				interface.setObject(INDEX);
+				interface.setObject(MINI_INDEX);
 				interface.setIndexName(statement[2]);
 			}
 		}
@@ -289,8 +289,8 @@ Interface Interpreter::parse()
 			throw SyntaxException(string("table \'") + statement[3] + "\' not found.");
 		if(statement.size() > 4)	//has where clause
 			processCondition(statement[3], statement, 5, interface);
-		interface.setOperation(SELECT);
-		interface.setObject(TABLE);
+		interface.setOperation(MINI_SELECT);
+		interface.setObject(MINI_TABLE);
 		interface.setTableName(statement[3]);
 	}
 	else if(statement[0] == "insert")
@@ -374,8 +374,8 @@ Interface Interpreter::parse()
 			}
 			interface.addData(u);
 		}
-		interface.setOperation(INSERT);
-		interface.setObject(TABLE);
+		interface.setOperation(MINI_INSERT);
+		interface.setObject(MINI_TABLE);
 		interface.setTableName(statement[2]);
 	}
 	else if(statement[0] == "delete")
@@ -387,8 +387,8 @@ Interface Interpreter::parse()
 			throw SyntaxException(string("table \'") + statement[2] + "\' not found.");
 		if(statement.size() > 3)
 			processCondition(statement[2], statement, 4, interface);
-		interface.setOperation(DELETE);
-		interface.setObject(TABLE);
+		interface.setOperation(MINI_DELETE);
+		interface.setObject(MINI_TABLE);
 		interface.setTableName(statement[2]);
 	}
 	else if(statement[0] == "quit")
