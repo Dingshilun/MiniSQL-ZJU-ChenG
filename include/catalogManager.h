@@ -28,7 +28,7 @@ class catalogManager
     vector<attrNode> getAttrList(string tablename);
     attrNode getAttrInfo(string tablename,string attrname);
     vector<string> getIndexOfTable(string tablename);
-    string getIndexByAttrID(string tablename,int column);
+    string getIndexByAttrID(string tablename,int column);//不存在返回""空字符串
 
     int getRecordNum(string tablename);//返回条目数量
     bool deleteTable(string tablename);
