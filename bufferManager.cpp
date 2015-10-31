@@ -85,7 +85,8 @@ void bufferNode::writeBlock(string data, int length, int offset)
 {
 	this->dirty = true;
 	const char* c = data.c_str();
-	memcpy(this->dataField + offset, c, length);
+	memcpy(this->dataField + offset, c, data.size());
+	memset(this->dataField + offset + data.size(), 0, length - data.size());
 }
 
 
