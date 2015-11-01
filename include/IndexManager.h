@@ -1,7 +1,13 @@
 #ifndef _INDEXMANAGE_H_
 #define _INDEXMANAGE_H_
-#include <vector>
 #include <map>
+#include <io.h>
+#include <iostream>
+#include <math.h>
+#include <String>
+#include <stdio.h>
+#include <vector>
+#include "BufferManager.h"
 using namespace std;
 
 #define SINGLE 0
@@ -10,112 +16,70 @@ using namespace std;
 #define NOTLARGER 3
 #define LESS 4
 
-class IndexManager
+#define CHAR_MAX  15
+#define INT_MAX   509
+#define FLOAT_MAX 509
+
+typedef int ADDRESS;
+
+struct BplusNode 
+{ 
+    int[INT_MAX] key;       //key value  
+    int[INT_MAX+1] Pointer; //in interior node it ponit to the child node
+    						//in leaf node, the low 12 bit is the offset number
+    						//              the high 20 bit is the block number
+    int  nkey;              //the number of existing key
+    bool isleaf ;           //will be true if the node is leaf node, otherwise it will be false
+        
+};
+
+class BplusTree
+{
+private:
+	string indexFileName;	
+	ADDRESS root;
+	FILE* Bfile;
+	FILE* configFile;
+	BufferNode temp_bf;
+
+public: 
+	BplusTree( string, BufferNode&  );
+	~BplusTree();
+	void readBplusNode( ADDRESS, BplusNode& );
+	void writeBplusNode( ADDRESS, BplusNode& );
+	bool buildBplusTree( string, int, BufferNode& );  	
+	void insertBplusTree( Target& );
+	void insert( ADDRESS, Target& );  
+	void splitBplusNode( BplusNode&, BPlusNode&, const int );  
+	vector<index_info>& searchBplusTree( Target&, ADDRESS ) const; 
+	void deleteBplusTree( Target& );
+	void Delete( ADDRESS, Target& ); 
+};
+
+class IndexManager: public BufferManager
 {
 private:
 	map< string, BplusTree > indexTable; //store the B+ tree list
 public:
-	bool createIndex( Target t, string indexName );
-	indexResult* searchSingle( Target t ); 
-	bool insert( Target t );
-	bool deleteKey( Target t );
-	bool deleteIndex( Target t );
-};
+	
+	bool createIndex( Target );
+	vector<index_info>& search( Target ); 
+	void insert( Target );
+	void deleteKey( Target );
+	bool deleteIndex( Target );
+	bool existIndex( Target );
 
-struct indexResult
-{
-	int blockNumber;
-	int offset;
-	indexResult* next;
-};
-
-struct indexNode
-{
-	string tableName;
-	string attribute;
-	string inexName;
 };
 
 template< class T >
-class Target 
+struct Target 
 {
-private:
 	string table;
-	string attribute;
-	T Key;
+	string indexName;
+	T key;
+	index_info index;
 	int type;
-public:
-	Target( string t, string a )
-	Target( string t, string a, T x );
-	~Target();
-	void setTable( string name );
-	void setAttribute( string name );
-	void setBeginKey( T x );
-	void setEndKey( T x );
-	string getTable();
-	strinng getAttribute();
-	T getKey();
-	T getBeginKey();
-	T getEndKey();
-	bool isSingle();
 };
 
-template< class T >
-class BplusTree
-{
-private:
-	int M;
-	InteriorNode root;
-
-public:
-	BplusTree();
-	~BplusTree();
-	bool isEmpty();
-	bool insert( T target, ??? ); //'???' should be the address of the record in the database file
-	bool delete( T target, ??? );
-	bool deleteIndex();
-	IndexNode rangeSearch( T beginTarget, T endTarget );
-	IndexNode singleSearch( T target ); 
-};
-
-template < class T >
-class InteriorNode
-{
-private:
-	int M;  
-	vector<T> key;
-	vector<InteriorNode*> pointer;
-
-public:
-	InteriorNode();
-	~InteriorNode();
-
-	virtual bool isEmpty();
-	bool checkKey( T target ); //check whether the key with the value of taget exist or not
-	T getKey( int i );
-	InteriorNode* getChildPointer( int i );
-	InteriorNode* getTargetPointer( T target );
-};
-
-template< class T >
-class LeafNode:public InteriorNode
-{
-private:
-	vector<int> blockNumber;
-	vector<int> offset;
-	LeafNode* nextLeafNode;
-
-public:
-	virtual bool isEmpty();
-	??? getRecordAddress( T target );
-    LeafNode* getNextLeaf();
-};
 
 #endif
-
-
-
-
-
-
-
