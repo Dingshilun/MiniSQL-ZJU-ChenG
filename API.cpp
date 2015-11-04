@@ -1,21 +1,12 @@
 #include"interface.h"
 #include"catalogManager.h"
-#include"IndexManager.h"
+#include"IndexManager2.h"
 #include"new_recordManager.h"
 #include"API.h"
 #include"string"
 #include"iostream"
 #include<algorithm>
-#define MINI_FLOAT 0
-#define MINI_INT 1
-#define MINI_STRING 2
-#define MINI_CREATE 0
-#define MINI_DELETE 1
-#define MINI_SELECT 2
-#define MINI_DROP 3
-#define MINI_INSERT 4
-#define MINI_TABLE 0
-#define MINI_INDEX 1
+
 using namespace std;
 class CreationFailureOnCatalog{};
 class CreationFailureOnBplus{};
@@ -63,6 +54,7 @@ int API::exec(Interface inter)
 	int op = inter.whichOperation();
 	string tablename = inter.getTableName();
 	switch (op){
+		vector<attrNode> tableAttr;
 	case MINI_CREATE://create index or table
 		int type = inter.whichObject();
 		switch (type)
@@ -79,6 +71,7 @@ int API::exec(Interface inter)
 				{
 					/*select all the existed tuples in table and add them into the index*/
 					/*addition needed*/
+					cout << "Create Index successfully!" << endl;
 				}
 			}
 			catch (){}
@@ -86,7 +79,7 @@ int API::exec(Interface inter)
 		}
 		break;
 	case MINI_DROP://drop table and index
-		vector<attrNode> tableAttr = catlog.getAttrList(tablename);
+		
 		switch (inter.whichObject())
 		{
 		case MINI_TABLE:
@@ -119,7 +112,7 @@ int API::exec(Interface inter)
 		break;
 	}
 }
-int API::createTable(string tablename, vector<attrNode> attributes) //throw(alreadyExist,CreationFailureOnCatalog,)
+int API::createTable(string tablename, vector<attrNode> attributes)  //throw(alreadyExist,CreationFailureOnCatalog,)
 {
 	//return value 0 -1 1
 	//0 means existed,-1 creation failure, 1 success
@@ -138,8 +131,8 @@ int API::createTable(string tablename, vector<attrNode> attributes) //throw(alre
 				{
 					if (it->isPrimary)
 					{
-						catlog.createIndex(tablename + ' ' + it->attrName, tablename, column);
-						return (createIndex(tablename, tablename+' '+it->attrName,it->attrName,column));
+						//catlog.createIndex(tablename + ' ' + it->attrName, tablename, column);
+						return (createIndex(tablename, tablename+'.'+it->attrName,it->attrName,column));
 					}
 					column++;
 				}
@@ -151,7 +144,7 @@ int API::createTable(string tablename, vector<attrNode> attributes) //throw(alre
 		{
 		}
 	}
-}
+} 
 int API::createIndex(string tablename, string indexname, string attribute,int column)throw(alreadyExist,CreationFailureOnBplus)
 {
 	int flag = catlog.doesIndexExist(indexname);
@@ -167,13 +160,12 @@ int API::createIndex(string tablename, string indexname, string attribute,int co
 			/*
 			use b+tree to build the index
 			*/
-			attrNode attrPro = getAttName(tablename,column);
+			indexname = catlog.getIndexByAttrID(tablename, column);
+			/*attrNode attrPro = getAttName(tablename,column);
 			switch (attrPro.type)
 			{//for different type , create a corressponding index.
 			case MINI_FLOAT:
-				Target<float> tmp1(tablename, attribute);
-				tmp1.setTable(tablename);
-				tmp1.setAttribute(attribute);
+				Target<float> tmp1(indexname);
 				indexmanager.createIndex(tmp1, indexname);
 				break;
 			case MINI_INT:
@@ -188,7 +180,7 @@ int API::createIndex(string tablename, string indexname, string attribute,int co
 				tmp3.setAttribute(attribute);
 				indexmanager.createIndex(tmp3, indexname);
 				break;
-			}
+			}*/
 			/*after creation,insert all the value already exists*/
 			attrNode attr_property = getAttName(tablename, column);
 			vector<attrNode>attr_list = catlog.getAttrList(tablename);
@@ -196,25 +188,29 @@ int API::createIndex(string tablename, string indexname, string attribute,int co
 			vector<attrValues>::iterator tuples = all_tuples.begin();//get all the values in the attribute
 			for (; tuples != all_tuples.end(); tuples++)
 			{
-				switch (attrPro.type)
+				Target<float> tmp1(indexname);
+				Target<int> tmp2(indexname);
+				Target<string> tmp3(indexname);
+				switch (attr_property.type)
 				{
 				case MINI_FLOAT:
-					Target<float> tmp1(tablename, indexname);
 					tmp1.setKey(tuples->value.f);
-					tmp1.setindex_info(tuples->ii);
+					tmp1.setIndex_info(tuples->ii);
+					indexmanager.insert(tmp1);
 					break;
-				case MINI_INT:
-					Target<int> tmp2(tablename, indexname);
+				case MINI_INT:					
 					tmp2.setKey(tuples->value.n);
-					tmp2.setindex_info(tuples->ii);
+					tmp2.setIndex_info(tuples->ii);
+					indexmanager.insert(tmp2);
 					break;
 				case MINI_STRING:
-					Target<string> tmp3(tablename, indexname);
 					tmp3.setKey(tuples->value.s);
-					tmp3.setindex_info(tuples->ii);
+					tmp3.setIndex_info(tuples->ii);
+					indexmanager.insert(tmp3);
 					break;
 				}
 			}
+			//may need this sentence
 			delete &all_tuples;
 			}
 		catch (alreadyExist)
@@ -262,26 +258,27 @@ int API::Insert(string tablename, vector<Union> data)
 			string indexname = catlog.getIndexByAttrID(tablename, i);
 			if (tmp.isPrimary&&indexname!=""||tmp.isUnique&&indexname!="")//test if already exists
 			{	
+				Target<string> tmp_str(indexname);
+				Target<int> tmp_int(indexname);
+				Target<string> tmp_float(indexname);
+				vector<index_info> exist;
 				switch (attr.type){
-				case MINI_STRING:
-					Target<string> tmp_str(tablename, indexname);
+				case MINI_STRING:					
 					tmp_str.setType = SINGLE;
 					tmp_str.setKey = data[i].s;
-					vector<index_info> exist = indexmanager.searchSingle(tmp_str);
+					exist = indexmanager.search(tmp_str);
 					if (!exist.empty()) { cout << "the "<<attr.attrName<<"can't have duplicate value!" << endl; return -1; }//already exists
 					break;
-				case MINI_INT:
-					Target<int> tmp_int(tablename, indexname);
+				case MINI_INT:					
 					tmp_int.setType = SINGLE;
 					tmp_int.setKey = data[i].s;
-					vector<index_info> exist = indexmanager.searchSingle(tmp_int);
+					exist = indexmanager.search(tmp_int);
 					if (!exist.empty()) { cout << "the " << attr.attrName << "can't have duplicate value!" << endl; return -1; }//already exists
 					break;
-				case MINI_FLOAT:
-					Target<string> tmp_float(tablename, indexname);
+				case MINI_FLOAT:					
 					tmp_float.setType = SINGLE;
 					tmp_float.setKey = data[i].s;
-					vector<index_info> exist = indexmanager.searchSingle(tmp_float);
+					exist = indexmanager.search(tmp_float);
 					if (!exist.empty()) { cout << "the " << attr.attrName << "can't have duplicate value!" << endl; return -1; }//already exists
 					break;
 				}
@@ -295,29 +292,29 @@ int API::Insert(string tablename, vector<Union> data)
 		int i = 0;
 		for (; insert_it != attlist.end(); insert_it++,i++)
 		{
-			string indexname = catlog.getIndexByAttrID(tablename, i);
+			string indexname = catlog.getIndexByAttrID(tablename, i++);
 			if (indexname!="")//test if already exists
 			{
+				Target<string> tmp_str(indexname);
+				Target<int> tmp_int(indexname);
+				Target<string> tmp_float(indexname);
 				switch (attr.type){
 				case MINI_STRING:
-					Target<string> tmp_str(tablename, indexname);
 					tmp_str.setType = SINGLE;
 					tmp_str.setKey = data[i].s;
-					tmp_str.setindex_info(tmp_index);
+					tmp_str.setIndex_info(tmp_index);
 					indexmanager.insert(tmp_str);
 					break;
 				case MINI_INT:
-					Target<int> tmp_int(tablename, indexname);
 					tmp_int.setType = SINGLE;
 					tmp_int.setKey = data[i].s;
-					tmp_int.setindex_info(tmp_index);
+					tmp_int.setIndex_info(tmp_index);
 					indexmanager.insert(tmp_int);
 					break;
 				case MINI_FLOAT:
-					Target<string> tmp_float(tablename, indexname);
 					tmp_float.setType = SINGLE;
 					tmp_float.setKey = data[i].s;
-					tmp_float.setindex_info(tmp_index);
+					tmp_float.setIndex_info(tmp_index);
 					indexmanager.insert(tmp_float);
 					break;
 				}
@@ -331,10 +328,11 @@ int API::Insert(string tablename, vector<Union> data)
 }
 int API::Delete(string tablename, vector<TreeNode> conditions)
 {
+	/*
+	first find conditions with indexs.
+	*/
 	try{
-		/*
-		first find conditions with indexs.
-		*/
+		
 		vector<TreeNode>::iterator	it = conditions.begin();
 		vector<vector<index_info>> indexs;
 		string indexname;
@@ -348,9 +346,9 @@ int API::Delete(string tablename, vector<TreeNode> conditions)
 				{
 					//find all the index_info which fix in the condition
 					attrNode attr = getAttName(tablename, it->id);
-					Target<string> tmpStr(tablename, indexname);
-					Target<float> tmpLF(tablename, indexname);
-					Target<int> tmpInt(tablename, indexname);
+					Target<string> tmpStr(indexname);
+					Target<float> tmpLF(indexname);
+					Target<int> tmpInt(indexname);
 					switch (it->op)//set the operation
 					{
 					case 0://:=
@@ -383,21 +381,21 @@ int API::Delete(string tablename, vector<TreeNode> conditions)
 					{
 					case MINI_FLOAT:
 						tmpLF.setvalue(it->value.f);
-						vector<index_info>& tt = indexmanager.searchSingle(tmpLF);
+						vector<index_info>& tt = indexmanager.search(tmpLF);
 						indexs.push_back(tt);
 						delete &tt;
 						it = conditions.erase(it);
 						break;
 					case MINI_INT:
 						tmpInt.setvalue(it->value.n);
-						vector<index_info>& tt = indexmanager.searchSingle(tmpInt);
+						vector<index_info>& tt = indexmanager.search(tmpInt);
 						indexs.push_back(tt);
 						delete &tt;
 						it = conditions.erase(it);
 						break;
 					case MINI_STRING:
 						tmpStr.setvalue(it->value.s);
-						vector<index_info>& tt = indexmanager.searchSingle(tmpStr);
+						vector<index_info>& tt = indexmanager.search(tmpStr);
 						indexs.push_back(tt);
 						delete &tt;
 						it = conditions.erase(it);
@@ -410,7 +408,7 @@ int API::Delete(string tablename, vector<TreeNode> conditions)
 		//select from recordmanager
 		vector<attrNode> attr = catlog.getAttrList(tablename);
 		vector<index_info> merge_result;
-		if (!indexs.empty())merge_index(indexs, merge_result);
+		if (!indexs.empty()) merge_index(indexs, merge_result);
 		/*
 		delete the record using the recordmanager.
 		*/
@@ -432,33 +430,33 @@ int API::Delete(string tablename, vector<TreeNode> conditions)
 					switch (tuples->type)
 					{
 					case MINI_FLOAT:
-						Target<float> tmp1(tablename, indexname);
+						Target<float> tmp1(indexname);
 						tmp1.setKey(tuples->value.f);
 						tmp1.setType(SINGLE);
-						indexmanager.deleteKey(tmp1);
+						indexmanager.delete(tmp1);
 						break;
 					case MINI_INT:
-						Target<int> tmp2(tablename, indexname);
+						Target<int> tmp2(indexname);
 						tmp2.setKey(tuples->value.n);
 						tmp2.setType(SINGLE);
-						indexmanager.deleteKey(tmp2);
+						indexmanager.delete(tmp2);
 						break;
 					case MINI_STRING:
-						Target<string> tmp3(tablename, indexname);
+						Target<string> tmp3(indexname);
 						tmp3.setKey(tuples->value.s);
 						tmp3.setType(SINGLE);
-						indexmanager.deleteKey(tmp3);
+						indexmanager.delete(tmp3);
 						break;
 					}
 					count++;
 				}
 			}
 		}
-		catlog.recordDelete(tablename, count;)
+		catlog.recordDelete(tablename, count);
 		return count;
 	}
-	catch (){
-
+	catch ()
+	{
 	}
 }
 int API::dropTable(string tablename)

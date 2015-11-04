@@ -3,7 +3,7 @@
 #include"interface.h"
 #include"catalogManager.h"
 #include"IndexManager.h"
-#include"new_recordManager.h"
+#include"recordManager2.h"
 #include"string"
 #include"iostream"
 #include<map>
