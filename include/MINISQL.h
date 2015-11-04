@@ -11,5 +11,10 @@
 #define MINI_INSERT 4
 #define MINI_TABLE 0
 #define MINI_INDEX 1
-
+#define EQU 0
+#define LT 1
+#define GT 2
+#define LE 3
+#define GE 4
+#define NE 5
 #endif
