@@ -59,17 +59,17 @@ public:
 	recordManager();
 	~recordManager();
 
-	void judge(bool &notMatch, vector <TreeNode> &v_tn , vector <attrNode> &v_an, bufferNode &temp_bn, int &offset);
-	void print(vector <attrNode> &v_an , bufferNode &temp_bn, int offset);
-	void delAndGetValue(vector < vector < deleted_node > > &del_ind, vector<attrNode> &v_an, vector<int> &v_indexNum, map<int,int> &m, bufferNode &temp_bn, int &offset);
+	void judge(bool &notMatch, vector <TreeNode> &v_tn , vector <attrNode> &v_an, bufferNode *p_temp_bn, int &offset);
+	void print(vector <attrNode> &v_an , bufferNode *p_temp_bn, int offset);
+	void delAndGetValue(vector < vector < deleted_node > > &del_ind, vector<attrNode> &v_an, vector<int> &v_indexNum, map<int,int> &m, bufferNode *p_temp_bn, int &offset);
 
 	vector <attrValue> & select_attr(string table_name, vector <attrNode> &v_an ,int num ); 
 		/* 返回某个属性的所有值 */
-	int select(string table_name, int r_length, vector<TreeNode> &v_tn, vector<attrNode> &v_an, vector <index_info> &join_ii);
+	int select(string table_name, vector<TreeNode> &v_tn, vector<attrNode> &v_an, vector <index_info> &join_ii);
 		/* v_an 提供该表所有属性信息 */
-	index_info &insert(string table_name, int r_length, vector<attrAndvalue> &v_aav );
+	index_info &insert(string table_name, vector<attrAndvalue> &v_aav );
 		/*	*/
-	vector < vector < deleted_node > >& delete_tuple (string table_name, int r_length, vector<TreeNode> &v_tn, vector<attrNode> &v_an, vector <index_info>  &join_ii );
+	vector < vector < deleted_node > >& delete_tuple (string table_name, vector<TreeNode> &v_tn, vector<attrNode> &v_an, vector <index_info>  &join_ii );
 		/* 根据不同属性返回若干aav的list */
 	int getCount(){
 		return count;
