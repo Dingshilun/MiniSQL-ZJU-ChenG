@@ -5,7 +5,7 @@
 
 using namespace std;
 
-Interpreter::Interpreter()
+Interpreter::Interpreter() :api(catalog)
 {
 	token.insert('('); token.insert(')'); token.insert(','); token.insert(';');
 	token.insert(' '); token.insert('\''); token.insert('\"');
@@ -26,14 +26,17 @@ void Interpreter::pipeline()
 			readCommand(cmd);
 			if (statement.size() == 0)
 				continue;
+			for (int i = 0; i < statement.size(); ++i)
+				cout << statement[i] << ' ';
+			cout << endl;
 			Interface interface = parse();
 			api.exec(interface);
-			
+
 		}
 		catch (SyntaxException ex)
 		{
 			cout << "Syntax Error: " << ex.errlog << endl << endl;
-			for(int i = 0; i < statement.size(); ++i)
+			for (int i = 0; i < statement.size(); ++i)
 				cout << statement[i] << ' ';
 			cout << endl;
 		}
@@ -86,8 +89,8 @@ void Interpreter::readCommand(bool cmd)	//if a statement is
 	line = line.substr(0, trim + 1);
 	//to lower case;
 	for (int i = 0; i < line.size(); ++i)
-		if (line[i] <= 'Z' && line[i] >= 'A')
-			line[i] += 32;
+	if (line[i] <= 'Z' && line[i] >= 'A')
+		line[i] += 32;
 	int place; //place of ';'
 	while ((place = split(line)) == -1){ //doen't meet a ';'
 		if (cmd)
@@ -186,7 +189,7 @@ Interface Interpreter::parse()
 				throw SyntaxException("index \'" + statement[2] + "\' has already existed.");
 			if (!catalog.doesAttrExist(statement[4], statement[6]))
 				throw SyntaxException("column \'" + statement[6] + "\' not found");
-			AttrNode attr = catalog.getAttrInfo(statement[4], statement[6]);
+			attrNode attr = catalog.getAttrInfo(statement[4], statement[6]);
 			if (attr.isPrimary)
 				throw SyntaxException(statement[6] + " is a primary key, and a default index has been created.");
 			if (!attr.isUnique)
@@ -195,7 +198,7 @@ Interface Interpreter::parse()
 			interface.setObject(MINI_INDEX);
 			interface.setTableName(statement[4]);
 			interface.setIndexName(statement[2]);
-			interface.setColumn(getAttrNum(statement[4], statement[6]));
+			interface.setColumn(catalog.getAttrNum(statement[4], statement[6]));
 		}
 		//create table
 		else if (statement[1] == "table"){
@@ -252,7 +255,7 @@ Interface Interpreter::parse()
 							attr.isUnique = true;
 						else if (attribute.size() != 2)
 							throw SyntaxException("INT attribute should be in the format: <attr_name> int [unique].");
-						attr.type = INT;
+						attr.type = MINI_INT;
 					}
 					else if (attribute[1] == "float"){
 						if (attribute.size() == 3 && attribute[2] != "unique")
@@ -261,7 +264,7 @@ Interface Interpreter::parse()
 							attr.isUnique = true;
 						else if (attribute.size() != 2)
 							throw SyntaxException("FLOAT attribute should be in the format: <attr_name> float [unique].");
-						attr.type = FLOAT;
+						attr.type = MINI_FLOAT;
 					}
 					else if (attribute[1] == "char"){
 						if (attribute.size() == 6 && attribute[5] != "unique")
@@ -276,13 +279,13 @@ Interface Interpreter::parse()
 						int len = atoi(attribute[3].c_str());
 						if (len == 0)
 							throw SyntaxException(string("\'") + attribute[3] + "\' should be a positive integer less than 10000.");
-						attr.type = STRING;
+						attr.type = MINI_STRING;
 						attr.length = len;
 					}
 					else
 						throw SyntaxException(string("\'") + attribute[1] + "\' unknown type.");
 					attrCnt.insert(attribute[0]);
-					interface.addDefinition(def);
+					interface.addDefinition(attr);
 				}
 			}
 			interface.setOperation(MINI_CREATE);
@@ -300,7 +303,7 @@ Interface Interpreter::parse()
 
 		//drop table
 		if (statement[1] == "table"){
-			if (!catalog.doesTableExist())
+			if (!catalog.doesTableExist(statement[2]))
 				throw SyntaxException(string("table \'") + statement[2] + "\' not found.");
 			else{
 				interface.setObject(MINI_TABLE);
@@ -309,7 +312,7 @@ Interface Interpreter::parse()
 		}
 		//drop index
 		else if (statement[1] == "index"){
-			if (!catalog.doesIndexExist())
+			if (!catalog.doesIndexExist(statement[2]))
 				throw SyntaxException(string("index \'") + statement[2] + "\' not found.");
 			else{
 				interface.setObject(MINI_INDEX);
@@ -351,7 +354,7 @@ Interface Interpreter::parse()
 				throw SyntaxException("if you want to insert a null value, please explicitly use \'null\'.");
 		}
 		//get attribute list
-		list<attrNode> attribute = getAttrList(statement[2]);
+		list<attrNode> attribute = catalog.getAttrList(statement[2]);
 		if (values.size() != attribute.size())
 			throw SyntaxException("the number of values doesn't match the table.");
 		int i = 0;
@@ -366,49 +369,49 @@ Interface Interpreter::parse()
 			switch (iter->type){
 			case MINI_INT:
 			{
-				// //contains only numbers
-				regex pattern("((-|\\+)?)\\d+");
-				if (!regex_match(values[i], pattern))
-					throw SyntaxException(iter->attrName + " is defined as an INT while \'" + condition[2] + "\' isn't.");
+							 // //contains only numbers
+							 regex pattern("((-|\\+)?)\\d+");
+							 if (!regex_match(values[i], pattern))
+								 throw SyntaxException(iter->attrName + " is defined as an INT while \'" + values[i] + "\' isn't.");
 
-				//number is in range
-				long long value = 0;
-				long long range = 1LL << 32 - 1;
-				int i = 0;
-				if (values[i][0] == '-'){
-					i++;
-					range++;
-				}
-				for (; i < values[i].size(); ++i){
-					value = value * 10 + condition[2][i] - 48;
-					if (value > range) break;
-				}
-				if (i < values[i].size())
-					throw SyntaxException(values[i] + " is out of range of INT.");
-				u.n = (int)value;
-				break;
+							 //number is in range
+							 long long value = 0;
+							 long long range = 1LL << 32 - 1;
+							 int j = 0;
+							 if (values[i][0] == '-'){
+								 j++;
+								 range++;
+							 }
+							 for (; j < values[i].size(); ++j){
+								 value = value * 10 + values[i][j] - 48;
+								 if (value > range) break;
+							 }
+							 if (i < values[i].size())
+								 throw SyntaxException(values[i] + " is out of range of INT.");
+							 u.n = (int)value;
+							 break;
 			}
 			case MINI_FLOAT:
 			{
-				regex pattern("(-|\\+)?\\d+(.\\d+)?");
-				if (!regex_match(values[i], pattern))
-					throw SyntaxException(iter->attrName + " is defined as a FLOAT while \'" + condition[2] + "\' isn't.");
-				double f = atof(values[i].c_str());
-				if (f == HUGE_VAL)
-					throw SyntaxException("number out of range.");
-				u.f = (float)f;
-				break;
+							   regex pattern("(-|\\+)?\\d+(.\\d+)?");
+							   if (!regex_match(values[i], pattern))
+								   throw SyntaxException(iter->attrName + " is defined as a FLOAT while \'" + values[i] + "\' isn't.");
+							   double f = atof(values[i].c_str());
+							   if (f == HUGE_VAL)
+								   throw SyntaxException("number out of range.");
+							   u.f = (float)f;
+							   break;
 			}
 			case MINI_STRING:
 			{
-				if (values[i].size() <= 1 || values[i][0] != '\'' || values[i][values[i].size() - 1] != '\'')
-					throw SyntaxException(values[i] + " can't be identified as a string.");
-				string s = values[i].substr(1, values[i].size() - 2);
-				attrNode attr = catalog.getAttrInfo(table, condition[0]);
-				int len = attr.length;
-				if (s.size() > len)
-					throw SyntaxException(condition[2] + " is oversized.");
-				u.s = s;
+								if (values[i].size() <= 1 || values[i][0] != '\'' || values[i][values[i].size() - 1] != '\'')
+									throw SyntaxException(values[i] + " can't be identified as a string.");
+								string s = values[i].substr(1, values[i].size() - 2);
+								attrNode attr = catalog.getAttrInfo(statement[2], values[i]);
+								int len = attr.length;
+								if (s.size() > len)
+									throw SyntaxException(values[i] + " is oversized.");
+								u.s = s;
 			}
 			}
 			interface.addData(u);
@@ -483,49 +486,49 @@ void Interpreter::processCondition(string table, vector<string> &statement, int 
 		else switch (type){
 		case MINI_INT:
 		{
-			// //contains only numbers
-			regex pattern("((-|\\+)?)\\d+");
-			if (!regex_match(condition[2], pattern))
-				throw SyntaxException(condition[0] + " is defined as an INT while \'" + condition[2] + "\' isn't.");
+						 // //contains only numbers
+						 regex pattern("((-|\\+)?)\\d+");
+						 if (!regex_match(condition[2], pattern))
+							 throw SyntaxException(condition[0] + " is defined as an INT while \'" + condition[2] + "\' isn't.");
 
-			//number is in range
-			long long value = 0;
-			long long range = 1LL << 32 - 1;
-			int i = 0;
-			if (condition[2][0] == '-'){
-				i++;
-				range++;
-			}
-			for (; i < condition[2].size(); ++i){
-				value = value * 10 + condition[2][i] - 48;
-				if (value > range) break;
-			}
-			if (i < condition[2].size())
-				throw SyntaxException(condition[2] + " is out of range of INT.");
-			u.n = (int)value;
-			break;
+						 //number is in range
+						 long long value = 0;
+						 long long range = 1LL << 32 - 1;
+						 int i = 0;
+						 if (condition[2][0] == '-'){
+							 i++;
+							 range++;
+						 }
+						 for (; i < condition[2].size(); ++i){
+							 value = value * 10 + condition[2][i] - 48;
+							 if (value > range) break;
+						 }
+						 if (i < condition[2].size())
+							 throw SyntaxException(condition[2] + " is out of range of INT.");
+						 u.n = (int)value;
+						 break;
 		}
 		case MINI_FLOAT:
 		{
-			regex pattern("(-|\\+)?\\d+(.\\d+)?");
-			if (!regex_match(condition[2], pattern))
-				throw SyntaxException(condition[0] + " is defined as a FLOAT while \'" + condition[2] + "\' isn't.");
-			double f = atof(condition[2].c_str());
-			if (f == HUGE_VAL)
-				throw SyntaxException("number out of range.");
-			u.f = (float)f;
-			break;
+						   regex pattern("(-|\\+)?\\d+(.\\d+)?");
+						   if (!regex_match(condition[2], pattern))
+							   throw SyntaxException(condition[0] + " is defined as a FLOAT while \'" + condition[2] + "\' isn't.");
+						   double f = atof(condition[2].c_str());
+						   if (f == HUGE_VAL)
+							   throw SyntaxException("number out of range.");
+						   u.f = (float)f;
+						   break;
 		}
 		case MINI_STRING:
 		{
-			if (condition[2].size() <= 1 || condition[2][0] != '\'' || condition[2][condition[2].size() - 1] != '\'')
-				throw SyntaxException(condition[2] + " can't be identified as a string.");
-			string s = condition[2].substr(1, condition[2].size() - 2);
-			u.s = s;
+							if (condition[2].size() <= 1 || condition[2][0] != '\'' || condition[2][condition[2].size() - 1] != '\'')
+								throw SyntaxException(condition[2] + " can't be identified as a string.");
+							string s = condition[2].substr(1, condition[2].size() - 2);
+							u.s = s;
 		}
 		}
 		TreeNode t;
-		t.id = getAttrNum(table, condition[0]);
+		t.id = catalog.getAttrNum(table, condition[0]);
 		t.type = type;
 		t.op = op[condition[1]];
 		t.value = u;

@@ -1,6 +1,8 @@
 #ifndef __INTERPRETER_H__
 #define __INTERPRETER_H__
-#include "miniSQL.h"
+#include "MINISQL.h"
+#include "API.h"
+#include "catalogManager.h"
 #include "interface.h"
 #include "attrNode.h"
 #include <set>
@@ -32,8 +34,8 @@ private:
 	bool loop;
 	bool cmd;
 	int level;
-	CatalogManager catalog;
-	API api(catalog);
+	catalogManager catalog;
+	API api;
 private:
 	int split(string line);
 	void refresh();

@@ -1,7 +1,9 @@
+#include "stdafx.h"
 #include "bufferManager.h"
 #include <iostream>
 #include <fstream>
 #include <vector>
+
 using namespace std;
 bufferNode::bufferNode()
 {
@@ -10,6 +12,19 @@ bufferNode::bufferNode()
 	dirty = false;
 	pin = false;
 	type = TABLE;
+	age = NULL;
+}
+
+bufferNode::bufferNode(const bufferNode& bn)
+{
+	dataField = new char[BLOCK_SIZE];
+	memcpy(dataField, bn.dataField, BLOCK_SIZE);
+	offset = bn.offset;
+	dirty = bn.dirty;
+	type = bn.type;
+	fileName = bn.fileName;
+	pin = bn.pin;
+	age = bn.age;
 }
 
 bufferNode::~bufferNode()
@@ -21,19 +36,22 @@ bufferManager::bufferManager()
 {
 	this->lruBase = false;
 	this->curAge = 0;
-	this->bufferPool = new vector<bufferNode>(MAX_BLOCK);
+	this->bufferPool = new bufferNode[MAX_BLOCK];
 }
 
 
 bufferManager::~bufferManager()
 {
 	flushAll();
+	delete[] bufferPool;
 }
 
 void bufferNode::setBufferNode(int type, std::string filename, int offset)
 {
 	flush();
 	dataField = new char[BLOCK_SIZE];
+	cerr << "set bn " << hex << (int)dataField << endl;
+	memset(dataField, 0, BLOCK_SIZE);
 	this->fileName = filename;
 	this->offset = offset;
 	this->type = type;
@@ -44,7 +62,7 @@ void bufferNode::setBufferNode(int type, std::string filename, int offset)
 	diskFile.open(this->fileName, ios::in | ios::out | ios::app | ios::binary);
 	if (!diskFile.good())
 		cerr << "file open error" << endl;
-	diskFile.seekg(ios::beg+offset*BLOCK_SIZE);
+	diskFile.seekg(ios::beg + offset*BLOCK_SIZE);
 	diskFile.read(dataField, BLOCK_SIZE);
 	diskFile.close();
 }
@@ -58,13 +76,7 @@ void bufferNode::flush()
 		out.open(this->fileName, ios::out | ios::in | ios::binary);
 		if (!out.good())
 			cerr << "file open error" << endl;
-		out.seekp(ios::beg+this->offset*BLOCK_SIZE);
-		/*
-		for (int i = 0; i < sizeof(dataField); ++i)
-		{
-			cerr << hex << (int)dataField[i];
-		}
-		*/
+		out.seekp(ios::beg + this->offset*BLOCK_SIZE);
 		out.write(dataField, BLOCK_SIZE);
 		out.close();
 	}
@@ -102,19 +114,19 @@ void bufferNode::readBlock(string& dest, int length, int offset)
 
 void bufferManager::flushAll()
 {
-	vector<bufferNode>::iterator bn_ite;
-	for (bn_ite = this->bufferPool->begin(); bn_ite != this->bufferPool->end(); ++bn_ite)
+	for (int i = 0; i<MAX_BLOCK; ++i)
 	{
-		bn_ite->flush();
+		bufferPool[i].flush();
 	}
 }
 
-void bufferManager::usingBlock(std::vector<bufferNode>::iterator bn_ite)
+
+void bufferManager::usingBlock(int i)
 {
-	bn_ite->age = ++this->curAge;
+	this->bufferPool[i].age = ++this->curAge;
 }
 
-std::vector<bufferNode>::iterator bufferManager::LRU()
+int bufferManager::LRU()
 {
 	cerr << "LRU" << this->minAge << endl;
 	return this->minIndex;
@@ -123,35 +135,40 @@ std::vector<bufferNode>::iterator bufferManager::LRU()
 bufferNode& bufferManager::getBlock(int type, std::string filename, int offset)
 {
 	this->lruBase = false;
-	vector<bufferNode>::iterator bn_ite;
-	for (bn_ite = this->bufferPool->begin(); bn_ite != this->bufferPool->end(); ++bn_ite)
-	{//sequential
-		if (bn_ite->isEmpty())
+
+	for (int i = 0; i < BLOCK_SIZE; ++i)
+	{
+		if (bufferPool[i].isEmpty())
 		{
-			bn_ite->setBufferNode(type, filename, offset);
-			usingBlock(bn_ite);
-			return *bn_ite;
+			bufferPool[i].setBufferNode(type, filename, offset);
+			usingBlock(i);
+			return bufferPool[i];
 		}
-		if (!this->lruBase&&!bn_ite->pin)
+		if (!this->lruBase&&!bufferPool[i].pin)
 		{//find first not pinned 
-			minAge = bn_ite->age;
-			minIndex = bn_ite;
+			minAge = bufferPool[i].age;
+			minIndex = i;
 			this->lruBase = true;
 		}
-		if (!bn_ite->pin&&bn_ite->age < minAge)
+		if (!bufferPool[i].pin&&bufferPool[i].age < minAge)
 		{
-			minAge = bn_ite->age;
-			minIndex = bn_ite;
+			minAge = bufferPool[i].age;
+			minIndex = i;
 		}
-		if (bn_ite->isMatch(type, filename, offset))
+		if (bufferPool[i].isMatch(type, filename, offset))
 		{
-			usingBlock(bn_ite);
-			return *bn_ite;
+			usingBlock(i);
+			return bufferPool[i];
 		}
 	}
 	//full
-	bn_ite = LRU();
-	bn_ite->setBufferNode(type, filename, offset);
-	usingBlock(bn_ite);
-	return *bn_ite;
+	int i = LRU();
+	bufferPool[i].setBufferNode(type, filename, offset);
+	usingBlock(i);
+	return bufferPool[i];
+}
+
+bufferNode* bufferManager::getBlockPointer(int type, std::string filename, int offset)
+{
+	return &getBlock(type, filename, offset);
 }

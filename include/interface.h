@@ -1,8 +1,10 @@
 #ifndef __INTERFACE_H__
 #define __INTERFACE_H__
-#include "miniSQL.h"
+#include "MINISQL.h"
 #include <string>
 #include <vector>
+#include"attrNode.h"
+
 using namespace std;
 struct Union{
 	bool isNull = false;
@@ -93,12 +95,12 @@ public:
 		definitions.push_back(def);
 	}
 	int findIndexOfDef(string name){
-		for(int i = 0; i < definitions.size(); ++i)
-			if(definitions[i].var == name){
-				definitions[i].isPrimary = true;
-				definitions[i].isUnique = true;
-				return i;
-			}
+		for (int i = 0; i < definitions.size(); ++i)
+		if (definitions[i].attrName == name){
+			definitions[i].isPrimary = true;
+			definitions[i].isUnique = true;
+			return i;
+		}
 		return -1;
 	}
 	void setPrimaryKeyIndex(int index){
@@ -110,7 +112,7 @@ private:
 	string tableName;
 	string indexName;
 	vector<TreeNode> conditions; 	//delete from <tableName> where <conditions>
-									//select * from <tableName> where <conditions>
+	//select * from <tableName> where <conditions>
 	int pkey;
 	vector<attrNode> definitions; //create <object(table)> <definitions> primary key definitions[<pkey>]
 	int column;	//create <object(index)> on <tableName>(<column>)

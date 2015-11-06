@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #include "catalogManager.h"
 #include <fstream>
 #include <iostream>
@@ -6,10 +7,31 @@
 using namespace std;
 catalogManager::catalogManager()
 {
+	readCatalog();
 }
 
 catalogManager::~catalogManager()
 {
+	writeCatalog();
+}
+
+string makeIndexName(string tablename, string indexname)
+{
+	return tablename + "-" + indexname + ".index";
+}
+string makeConfigName(string tablename, string indexname)
+{
+	return tablename + "-" + indexname + ".config";
+}
+
+string makeTableName(string tablename)
+{
+	return tablename + ".table";
+}
+
+string makeBareIndexName(string tablename, string indexname)
+{
+	return tablename + "-" + indexname;
 }
 
 void catalogManager::readCatalog()
@@ -33,7 +55,7 @@ void catalogManager::readCatalog()
 				cerr << e.what() << endl;
 			}
 			logfile.close();
-		}		
+		}
 	}
 	logfile.open("indexLog.log", ios::in);
 	if (logfile.good())
@@ -63,7 +85,7 @@ void catalogManager::writeCatalog()
 bool catalogManager::createTable(string tablename, list<attrNode> attrlist)
 {
 	fstream tablefile;
-	tablefile.open(tablename + ".tbl", ios::in);
+	tablefile.open(makeTableName(tablename), ios::in);
 	if (tablefile.good())//already exists
 	{
 		return false;
@@ -71,7 +93,7 @@ bool catalogManager::createTable(string tablename, list<attrNode> attrlist)
 	else
 	{
 		tablefile.close();
-		tablefile.open(tablename + ".tbl", ios::out);
+		tablefile.open(makeTableName(tablename), ios::out);
 		tablefile.close();
 		TableNode node(tablename, attrlist, 0);
 		this->tableList.push_back(node);
@@ -81,17 +103,21 @@ bool catalogManager::createTable(string tablename, list<attrNode> attrlist)
 
 bool catalogManager::createIndex(string indexname, string tablename, int columns)
 {
-	fstream indexfile;
-	indexfile.open(indexname + "-" + tablename + ".idx", ios::in);
-	if (indexfile.good())//already exists
+	fstream indexfile, configfile;
+	indexfile.open(makeIndexName(tablename, indexname), ios::in);
+	configfile.open(makeConfigName(tablename, indexname), ios::in);
+	if (indexfile.good() && configfile.good())//already exists
 	{
 		return false;
 	}
 	else
 	{
 		indexfile.close();
-		indexfile.open(indexname + "-" + tablename + ".idx", ios::out);
+		indexfile.open(makeIndexName(tablename, indexname), ios::out);
 		indexfile.close();
+		configfile.close();
+		configfile.open(makeConfigName(tablename, indexname), ios::out);
+		configfile.close();
 		//find attrName of column
 		string attrname;
 		list<TableNode>::iterator tite;
@@ -106,7 +132,7 @@ bool catalogManager::createIndex(string indexname, string tablename, int columns
 				attrname = aite->attrName;
 			}
 		}
-		indexNode node(tablename, indexname, attrname);
+		indexNode node(tablename, indexname, attrname, columns);
 		this->indexList.push_back(node);
 		return true;
 	}
@@ -125,18 +151,18 @@ bool catalogManager::doesTableExist(string tablename)
 	return false;
 }
 
-bool catalogManager::doesIndexExist(string indexname, string tablename)
+bool catalogManager::doesIndexExist(string indexname)
 {
 	list<indexNode>::iterator iite;
 	for (iite = this->indexList.begin(); iite != this->indexList.end(); ++iite)
 	{
-		if (iite->indexName == indexname&&iite->tableName == tablename)
+		if (iite->indexName == indexname)
 			return true;
 	}
 	return false;
 }
 
-indexNode catalogManager::findindex(string indexname,string tablename)
+indexNode catalogManager::findindex(string indexname, string tablename)
 {
 	list<indexNode>::iterator iite;
 	for (iite = this->indexList.begin(); iite != this->indexList.end(); ++iite)
@@ -159,7 +185,7 @@ bool catalogManager::doesAttrExist(string tablename, string attrname)
 				if (aite->attrName == attrname)
 					return true;
 			}
-		}	
+		}
 	}
 	return false;
 }
@@ -279,6 +305,17 @@ list<string> catalogManager::getIndexOfTable(string tablename)
 	return sv;
 }
 
+string catalogManager::getIndexByAttrID(string tablename, int column)
+{
+	list<indexNode>::iterator iite;
+	for (iite = this->indexList.begin(); iite != this->indexList.end(); ++iite)
+	{
+		if (iite->tableName == tablename && iite->column == column)
+			return makeBareIndexName(tablename, iite->indexName);
+	}
+	return "";
+}
+
 int catalogManager::getRecordNum(string tablename)//返回条目数量
 {
 	list<TableNode>::iterator tite;
@@ -320,14 +357,14 @@ bool catalogManager::deleteIndex(string indexname, string tablename)
 		if (iite->tableName == tablename&&iite->attribute == indexname)
 		{
 			iite = this->indexList.erase(iite);
-			string filename = indexname + "-" + tablename + ".idx";
+			string filename = makeIndexName(tablename, indexname);
 			remove(filename.c_str());
 		}
 		else
 		{
 			++iite;
 		}
-		
+
 	}
 	return true;
 }
@@ -335,12 +372,12 @@ bool catalogManager::deleteIndex(string indexname, string tablename)
 bool catalogManager::deleteTable(string tablename)
 {
 	list<TableNode>::iterator tite;
-	for (tite = this->tableList.begin(); tite != this->tableList.end(); )
+	for (tite = this->tableList.begin(); tite != this->tableList.end();)
 	{
 		if (tite->tableName == tablename)
 		{
 			tite = this->tableList.erase(tite);
-			string filename = tablename + ".tbl";
+			string filename = makeTableName(tablename);
 			remove(tablename.c_str());
 		}
 		else
@@ -353,9 +390,9 @@ bool catalogManager::deleteTable(string tablename)
 	{
 		if (iite->tableName == tablename)
 		{
-			string filename = iite->attribute + "-" + tablename + ".idx";
+			string filename = iite->attribute + "-" + tablename + ".index";
 			remove(filename.c_str());
-			this->indexList.erase(iite);
+			iite=this->indexList.erase(iite);
 		}
 		else
 		{
