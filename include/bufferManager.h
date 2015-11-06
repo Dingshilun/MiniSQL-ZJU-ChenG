@@ -1,10 +1,10 @@
 /*
-pin为true的block在buffer满时不会被替换
-getBlock中的offset指第几个block
-其余offset(block内的)全部指字节
-length也是字节
-type:table=0,index=1
-*/
+ pin为true的block在buffer满时不会被替换
+ getBlock中的offset指第几个block
+ 其余offset(block内的)全部指字节
+ length也是字节
+ type:table=0,index=1
+ */
 
 #ifndef __BUFFERMANAGER__H
 #define __BUFFERMANAGER__H
@@ -23,6 +23,7 @@ class bufferNode
 {
 public:
 	bufferNode();
+	bufferNode(const bufferNode& bn);
 	virtual ~bufferNode();
 
 	void setBufferNode(int type, std::string filename, int offset);//type:table=0,index=1
@@ -36,6 +37,7 @@ public:
 	{
 		this->dirty = true;
 		memcpy(this->dataField + offset, (char*)&data, length);
+
 	}
 	void writeBlock(std::string data, int length, int offset);
 	template<class T>
@@ -50,25 +52,26 @@ protected:
 	int offset;
 	int type;
 	bool dirty;
-
+	
 };
 
 class bufferManager
 {
 protected:
 
-	std::vector<bufferNode>* bufferPool;
+	bufferNode* bufferPool;
 	int curAge;//for LRU
 	int minAge;
 	bool lruBase;
-	std::vector<bufferNode>::iterator minIndex;
+	int minIndex;
 public:
 	bufferManager();
 	virtual ~bufferManager();
-	std::vector<bufferNode>::iterator LRU();
+	int LRU();
 	void flushAll();
-	void usingBlock(std::vector<bufferNode>::iterator bn_ite);
+	void usingBlock(int i);
 	bufferNode& getBlock(int type, std::string filename, int offset);
+	bufferNode* getBlockPointer(int type, std::string filename, int offset);
 };
 
 #endif

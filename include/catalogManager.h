@@ -15,26 +15,28 @@ public:
 	indexNode()
 	{
 	}
-	indexNode(std::string tablename,std::string indexname,std::string attrname)
+	indexNode(std::string tablename,std::string indexname,std::string attrname,int column)
 	{
 		this->tableName = tablename;
 		this->indexName = indexname;
 		this->attribute = attrname;
+		this->column = column;
 	}
 
 	std::string tableName;
 	std::string attribute;
 	std::string indexName;
+	int column;
 
 	friend std::ostream& operator<<(std::ostream& out, const indexNode& node)
 	{
-		out << node.tableName << '\t' << node.indexName << '\t' << node.attribute;
+		out << node.tableName << '\t' << node.indexName << '\t' << node.attribute << '\t' << node.column;
 		return out;
 	}
 
 	friend std::istream& operator>>(std::istream& in, indexNode& node)
 	{
-		in >> node.tableName >> node.indexName >> node.attribute;
+		in >> node.tableName >> node.indexName >> node.attribute >> node.column;
 		return in;
 	}
 };
@@ -110,7 +112,8 @@ public:
 	int getAttrNum(string tablename, string attrname);
 	list<attrNode> getAttrList(string tablename);
 	attrNode getAttrInfo(string tablename, string attrname);
-	list<string> getIndexOfTable(string tablename);
+	list<string> getIndexOfTable(string tablename); 
+	string getIndexByAttrID(string tablename, int column);//若不存在返回值为""
 	int getRecordNum(string tablename);//返回条目数量
 	bool deleteTable(string tablename);
 	bool deleteIndex(string indexname, string tablename);
