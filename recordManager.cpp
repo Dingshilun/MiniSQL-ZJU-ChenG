@@ -5,14 +5,14 @@ recordManager::~recordManager(){}
 
 
 
-void recordManager::judge(bool &notMatch, vector <TreeNode> &v_tn , vector <attrNode> &v_an, bufferNode &temp_bn, int &offset) {
+void recordManager::judge(bool &notMatch, vector <TreeNode> &v_tn , vector <attrNode> &v_an, bufferNode *p_temp_bn, int &offset) {
 
 	vector <TreeNode>::iterator it_tn;
 	for(it_tn = v_tn.begin(); it_tn != v_tn.end(); it_tn++) {
 					TreeNode temp_tn = *it_tn;
 					attrNode temp_an = v_an[temp_tn.id];
 					int isNull;
-					temp_bn.readBlock(isNull,4,offset + 4 + 4*temp_tn.id + temp_an.offset);
+					p_temp_bn->readBlock(isNull,4,offset + 4 + 4*temp_tn.id + temp_an.offset);
 					if (isNull){
 						switch(temp_tn.op){
 							case 0:	
@@ -27,7 +27,7 @@ void recordManager::judge(bool &notMatch, vector <TreeNode> &v_tn , vector <attr
 						switch(temp_tn.type){
 							case 1:
 								int temp_int ;
-								temp_bn.readBlock(temp_int, 4 , offset + 4 + 4*(temp_tn.id+1) + temp_an.offset);
+								p_temp_bn->readBlock(temp_int, 4 , offset + 4 + 4*(temp_tn.id+1) + temp_an.offset);
 								switch(temp_tn.op){
 									case 0:
 										notMatch = !(temp_int == temp_tn.value.n);
@@ -54,7 +54,7 @@ void recordManager::judge(bool &notMatch, vector <TreeNode> &v_tn , vector <attr
 							case 2:
 							{
 								string temp_str;
-								temp_bn.readBlock(temp_str , temp_an.length , offset + 4 + 4*(temp_tn.id+1) + temp_an.offset);
+								p_temp_bn->readBlock(temp_str , temp_an.length , offset + 4 + 4*(temp_tn.id+1) + temp_an.offset);
 								switch(temp_tn.op){
 									case 0:
 										notMatch = !(temp_str == temp_tn.value.s);
@@ -82,7 +82,7 @@ void recordManager::judge(bool &notMatch, vector <TreeNode> &v_tn , vector <attr
 								
 							case 3:
 								float temp_f;
-								temp_bn.readBlock(temp_f, 4, offset + 4 + 4*(temp_tn.id+1) + temp_an.offset);
+								p_temp_bn->readBlock(temp_f, 4, offset + 4 + 4*(temp_tn.id+1) + temp_an.offset);
 								switch(temp_tn.op){
 									case 0:
 										notMatch = !(temp_f == temp_tn.value.f);
@@ -116,7 +116,7 @@ void recordManager::judge(bool &notMatch, vector <TreeNode> &v_tn , vector <attr
 				return;
 }
 
-void recordManager::print(vector <attrNode> &v_an , bufferNode &temp_bn, int offset) {
+void recordManager::print(vector <attrNode> &v_an , bufferNode *p_temp_bn, int offset) {
 
 	vector <attrNode>::iterator it_an;
 
@@ -126,7 +126,7 @@ void recordManager::print(vector <attrNode> &v_an , bufferNode &temp_bn, int off
 	for (it_an = v_an.begin(); it_an != v_an.end(); it_an++, counter++) {
 		int isNull;
 		attrNode temp_an = *it_an;
-		temp_bn.readBlock(isNull,4,offset + 4 + 4*counter + temp_an.offset);
+		p_temp_bn->readBlock(isNull,4,offset + 4 + 4*counter + temp_an.offset);
 		if(isNull){
 			cout << "null\t" ;
 		}
@@ -134,19 +134,19 @@ void recordManager::print(vector <attrNode> &v_an , bufferNode &temp_bn, int off
 			switch(temp_an.type) {
 				case 1:
 					int t_int;
-					temp_bn.readBlock(t_int,4,offset + 4 + 4*(counter+1) + temp_an.offset);
+					p_temp_bn->readBlock(t_int,4,offset + 4 + 4*(counter+1) + temp_an.offset);
 					cout << t_int << '\t';
 					break;
 				case 2:
 				{
 					string t_str;
-					temp_bn.readBlock(t_str,temp_an.length,offset + 4 + 4*(counter+1) + temp_an.offset);
+					p_temp_bn->readBlock(t_str,temp_an.length,offset + 4 + 4*(counter+1) + temp_an.offset);
 					cout << t_str << '\t';
 					break;
 				}
 				case 3:
 					float t_f;
-					temp_bn.readBlock(t_f,4,offset + 4 + 4*(counter+1) + temp_an.offset);
+					p_temp_bn->readBlock(t_f,4,offset + 4 + 4*(counter+1) + temp_an.offset);
 					cout << t_f << '\t';
 					break;
 				default:
@@ -159,16 +159,16 @@ void recordManager::print(vector <attrNode> &v_an , bufferNode &temp_bn, int off
 	return;
 }
 
-void recordManager::delAndGetValue(vector < vector < deleted_node > > &del_ind, vector<attrNode> &v_an, vector<int> &v_indexNum, map<int,int> &m, bufferNode &temp_bn, int &offset) {
+void recordManager::delAndGetValue(vector < vector < deleted_node > > &del_ind, vector<attrNode> &v_an, vector<int> &v_indexNum, map<int,int> &m, bufferNode *p_temp_bn, int &offset) {
 	vector <int>::iterator it_in;
 	count++;
-	temp_bn.writeBlock((int)1,4,offset);
+	p_temp_bn->writeBlock((int)1,4,offset);
 	for(it_in = v_indexNum.begin();it_in != v_indexNum.end();it_in++){
 		int t_in = *it_in;
 		attrNode temp_an = v_an[t_in];
 		deleted_node del_node(temp_an.type,t_in);
 		int isNull;
-		temp_bn.readBlock(isNull,4,offset+4+4*t_in+temp_an.offset);
+		p_temp_bn->readBlock(isNull,4,offset+4+4*t_in+temp_an.offset);
 		if(isNull){
 			del_node.value.isNull = true;
 		}
@@ -176,20 +176,20 @@ void recordManager::delAndGetValue(vector < vector < deleted_node > > &del_ind, 
 			switch(temp_an.type){
 				case 1:
 					int temp_int;
-					temp_bn.readBlock(temp_int,4,offset+4+4*(t_in+1)+temp_an.offset);
+					p_temp_bn->readBlock(temp_int,4,offset+4+4*(t_in+1)+temp_an.offset);
 					del_node.value.n = temp_int;
 					break;
 				case 2:
 				{
 					string temp_str;
-					temp_bn.readBlock(temp_str,temp_an.length,offset+4+4*(t_in+1)+temp_an.offset);
+					p_temp_bn->readBlock(temp_str,temp_an.length,offset+4+4*(t_in+1)+temp_an.offset);
 					del_node.value.s = temp_str;
 					break;
 				}
 					
 				case 3:
 					float temp_f;
-					temp_bn.readBlock(temp_f,4,offset+4+4*(t_in+1)+temp_an.offset);
+					p_temp_bn->readBlock(temp_f,4,offset+4+4*(t_in+1)+temp_an.offset);
 					del_node.value.f = temp_f;
 					break;
 				default:
@@ -200,68 +200,55 @@ void recordManager::delAndGetValue(vector < vector < deleted_node > > &del_ind, 
 	}
 }
 
-int recordManager::select(string table_name,int r_length, vector<TreeNode> &v_tn, vector<attrNode> &v_an, vector <index_info>  &join_ii) {
+int recordManager::select(string table_name, vector<TreeNode> &v_tn, vector<attrNode> &v_an, vector <index_info>  &join_ii) {
 
 	vector<TreeNode>::iterator it_tn;
 	vector<index_info>::iterator it_ii;
 	vector<attrNode>::iterator it_an;
 
-	r_length += 4 + 4*v_an.size();
+	int r_length = 4 + 4*v_an.size() + v_an.back().offset + v_an.back().length;
+	//r_length += 4 + 4*v_an.size();
 	for (it_an = v_an.begin(); it_an !=v_an.end(); it_an++){
 		cout << '\t' << it_an->attrName ;
 	}
 	cout << endl;
 	count = 0;
-	bufferNode &temp_bn = getBlock(0,table_name,0);
+	
 	if (!join_ii.empty()) {
 		//intersect(vector<index_info> &join_ii,vector < vector <index_info> > &join_ii);
 		index_info temp_ii = {-1,-1}; //判断是否在同一个block内；
-		if ( !v_tn.empty() ){
-			for (it_ii = join_ii.begin(); it_ii != join_ii.end(); it_ii++) {
-				if(it_ii->num != temp_ii.num){
-					temp_ii = *it_ii;
-					temp_bn = getBlock(0,table_name,temp_ii.num);
-				}
-				temp_ii.offset = it_ii->offset;
-				int delOrUnwrite ;
-				temp_bn.readBlock(delOrUnwrite, 4, temp_ii.offset);
-				if(delOrUnwrite)
-					continue;
+		bufferNode *p_temp_bn = getBlockPointer(0, table_name, join_ii[0].num);
+		for (it_ii = join_ii.begin(); it_ii != join_ii.end(); it_ii++) {
+			if(it_ii->num != temp_ii.num){
+				temp_ii = *it_ii;
+				p_temp_bn = getBlockPointer(0,table_name,temp_ii.num);
+			}
+			temp_ii.offset = it_ii->offset;
+			int delOrUnwrite ;
+			p_temp_bn->readBlock(delOrUnwrite, 4, temp_ii.offset);
+			if(delOrUnwrite)
+				continue;
+			if(!v_tn.empty()){
 				bool notMatch = false;
-				judge(notMatch,v_tn,v_an,temp_bn,temp_ii.offset);
+				judge(notMatch,v_tn,v_an,p_temp_bn,temp_ii.offset);
 				if(notMatch)
 					continue;
-				print(v_an,temp_bn,temp_ii.offset);
 			}
-			cout << endl << ' ' << count << " record(s) are affected. " << endl;
-			return 0;
+			
+			print(v_an,p_temp_bn,temp_ii.offset);
 		}
-		else  {
-			for (it_ii = join_ii.begin(); it_ii != join_ii.end(); it_ii++){
-				if(it_ii->num != temp_ii.num){
-					temp_ii = *it_ii;
-					temp_bn = getBlock(0,table_name,temp_ii.num);
-				}
-				temp_ii.offset = it_ii->offset;
-				int delOrUnwrite = 0;
-				temp_bn.readBlock(delOrUnwrite, 4, temp_ii.offset);
-				if(delOrUnwrite)
-					continue;
-				print(v_an,temp_bn,temp_ii.offset);
-			}
-			cout << endl << ' ' << count << " record(s) are affected. " << endl;
-			return 0;
-		}
+		cout << endl << ' ' << count << " record(s) are affected. " << endl;
+		return 0;
 	}
-	else if(!v_tn.empty()){
+	else {
 		bool isEnd = false;
 		int b_counter = 0;
 		while(!isEnd){
-			temp_bn = getBlock(0,table_name,b_counter++);
+			bufferNode *p_temp_bn = getBlockPointer(0,table_name,b_counter++);
 			int current_offset = 0;
 			while (current_offset + r_length < 4096) {
 				int delOrUnwrite = 0;
-				temp_bn.readBlock(delOrUnwrite,4,current_offset);
+				p_temp_bn->readBlock(delOrUnwrite,4,current_offset);
 				if(delOrUnwrite==1){
 					current_offset+=r_length;
 					continue;
@@ -270,55 +257,37 @@ int recordManager::select(string table_name,int r_length, vector<TreeNode> &v_tn
 					isEnd = true;
 					break;
 				}
-				bool notMatch = false;
-				judge(notMatch,v_tn,v_an,temp_bn,current_offset);
-				if (notMatch){
-					current_offset += r_length;
-					continue;
+				if(!v_tn.empty()){
+					bool notMatch = false;
+					judge(notMatch,v_tn,v_an,p_temp_bn,current_offset);
+					if (notMatch){
+						current_offset += r_length;
+						continue;
+					}
 				}
-				print(v_an,temp_bn,current_offset);
+				
+				print(v_an,p_temp_bn,current_offset);
 				current_offset += r_length;
 			}		
 		}
 		cout << endl << ' ' << count << " record(s) are affected. " << endl;
 		return 0;
 	}
-	else{
-		bool isEnd = false;
-		int b_counter = 0;
-		while(!isEnd){
-			temp_bn = getBlock(0,table_name,b_counter++);
-			int current_offset = 0;
-			while(current_offset + r_length < 4096){
-				int delOrUnwrite =0 ;
-				temp_bn.readBlock(delOrUnwrite,4,current_offset);
-				if(delOrUnwrite==1){
-					current_offset+=r_length;
-					continue;
-				}
-				if(delOrUnwrite==2){
-					isEnd = true;
-					break;
-				}
-
-				print(v_an,temp_bn,current_offset);
-				current_offset += r_length;
-			}
-		}
-		cout << endl << ' ' << count << " record(s) are affected. " << endl;
-		return 0;
-	}
 }
 
-index_info& recordManager::insert(string table_name, int r_length , vector <attrAndvalue> &v_aav){
+index_info& recordManager::insert(string table_name, vector <attrAndvalue> &v_aav){
 
 	vector<attrAndvalue>::iterator it_aav;
-	r_length += 4 + 4*v_aav.size();
+	int r_length = 4;
+	for (it_aav = v_aav.begin(); it_aav != v_aav.end(); it_aav++){
+		r_length += (4 + it_aav->length);
+	}
+	//int r_length = 4 + 4*v_aav.size() + v_aav.back().offset + v_aav.back().length;
+	//r_length += 4 + 4*v_aav.size();
 	bool isEnd = false;
 	int b_counter = 0;
-	bufferNode &temp_bn = getBlock(0, table_name, 0);
 	while(!isEnd){
-		temp_bn = getBlock(0,table_name,b_counter++);
+		bufferNode &temp_bn = getBlock(0,table_name,b_counter++);
 		int current_offset = 0;
 		while(current_offset + r_length < 4096){
 			int delOrUnwrite;
@@ -377,8 +346,11 @@ index_info& recordManager::insert(string table_name, int r_length , vector <attr
 					if( (current_offset + 2*r_length) < 4096)
 						temp_bn.writeBlock((int)2,4,current_offset +r_length);
 					else{
-						temp_bn = getBlock(0,table_name,b_counter);
-						temp_bn.writeBlock((int)2,4,0);
+						//temp_bn.~bufferNode();
+						bufferNode &temp_bn2 = getBlock(0,table_name,b_counter);
+						temp_bn2.writeBlock((int)2,4,0);
+						int c = 2;
+						c = 3;
 					}
 				}
 				isEnd = true;	break;
@@ -389,20 +361,19 @@ index_info& recordManager::insert(string table_name, int r_length , vector <attr
 	return insert_ii;
 }
 
-vector < vector < deleted_node > >& recordManager::delete_tuple (string table_name, int r_length, vector<TreeNode> &v_tn, vector<attrNode> &v_an, vector <index_info> & join_ii ) {
+vector < vector < deleted_node > >& recordManager::delete_tuple (string table_name, vector<TreeNode> &v_tn, vector<attrNode> &v_an, vector <index_info> & join_ii ) {
 	
 	vector<TreeNode>::iterator it_tn;
 	vector<index_info>::iterator it_ii;
 	vector<attrNode>::iterator it_an;
 
-	r_length += 4 + 4*v_an.size();
+	int r_length = 4 + 4*v_an.size() + v_an.back().offset + v_an.back().length;
+	//r_length += 4 + 4*v_an.size();
 	vector <int> v_indexNum;	vector <int>::iterator it_in;
 	map<int, int> m;
 	int indexNum = 0;
 	int an_counter = 0;
-	bufferNode &temp_bn = getBlock(0, table_name, 0);
 	for(it_an = v_an.begin();it_an!=v_an.end();it_an++,an_counter++) {
-
 		if(it_an->hasIndex){
 			v_indexNum.push_back(an_counter);
 			vector <deleted_node> v_dn;
@@ -411,58 +382,45 @@ vector < vector < deleted_node > >& recordManager::delete_tuple (string table_na
 		}
 	}	//初始化del_ind，m记录该容器中属性的次序
 	count = 0;
+
 	if(!join_ii.empty()) {
+		bufferNode *p_temp_bn;
 		//intersect(vector<index_info> &join_ii,vector < vector <index_info> > &join_ii);
 		index_info temp_ii = {-1,-1}; //判断是否在同一个block内；
+		p_temp_bn = getBlockPointer(0, table_name, join_ii[0].num);
 
-		if(!v_tn.empty()){
 			for (it_ii = join_ii.begin(); it_ii != join_ii.end(); it_ii++) {
 				if(it_ii->num != temp_ii.num){
 					temp_ii = *it_ii;
-					temp_bn = getBlock(0,table_name,temp_ii.num);
+					p_temp_bn = getBlockPointer(0,table_name,temp_ii.num);
 				}
+				temp_ii.offset = it_ii->offset;
 
 				int delOrUnwrite = 0;
-				temp_bn.readBlock(delOrUnwrite, 4, temp_ii.offset);
+				p_temp_bn->readBlock(delOrUnwrite, 4, temp_ii.offset);
 				if(delOrUnwrite)
 					continue;
-				bool notMatch = false;
-
-				judge(notMatch,v_tn,v_an,temp_bn,temp_ii.offset);
-				if(notMatch)
-					continue;
-				//delAndGetIndex(vector < vector < deleted_node > > &del_ind, vector<attrNode> &v_an, vector<int> &v_indexNum, bufferNode &temp_bn, int offset);
-				delAndGetValue(del_ind,v_an,v_indexNum,m,temp_bn,temp_ii.offset);
+				if(!v_tn.empty()){
+					bool notMatch = false;
+					judge(notMatch,v_tn,v_an,p_temp_bn,temp_ii.offset);
+					if(notMatch)
+						continue;
+				}
+				delAndGetValue(del_ind,v_an,v_indexNum,m,p_temp_bn,temp_ii.offset);
+				
 			}
 			cout << endl << ' ' << count << " record(s) affected" << endl;
 			return del_ind;
-		}
-		else{
-			for (it_ii = join_ii.begin(); it_ii != join_ii.end(); it_ii++) {
-				if(it_ii->num != temp_ii.num){
-					temp_ii = *it_ii;
-					temp_bn = getBlock(0,table_name,temp_ii.num);
-				}
-
-				int delOrUnwrite = 0;
-				temp_bn.readBlock(delOrUnwrite, 4, temp_ii.offset);
-				if(delOrUnwrite)
-					continue;
-				delAndGetValue(del_ind,v_an,v_indexNum,m,temp_bn,temp_ii.offset);				
-			}
-			cout << endl << ' ' << count << " record(s) affected" << endl;
-			return del_ind;
-		}
 	}
-	else if(!v_tn.empty()) {
+	else {
 		bool isEnd = false;
 		int b_counter = 0;
 		while(!isEnd) {
-			temp_bn = getBlock(0,table_name,b_counter++);
+			bufferNode *p_temp_bn = getBlockPointer(0,table_name,b_counter++);
 			int current_offset = 0;
 			while (current_offset + r_length < 4096) {
 				int delOrUnwrite = 0;
-				temp_bn.readBlock(delOrUnwrite,4,current_offset);
+				p_temp_bn->readBlock(delOrUnwrite,4,current_offset);
 				if(delOrUnwrite==1){
 					current_offset+=r_length;
 					continue;
@@ -471,37 +429,16 @@ vector < vector < deleted_node > >& recordManager::delete_tuple (string table_na
 					isEnd = true;
 					break;
 				}
-				bool notMatch = false;
-				judge(notMatch,v_tn,v_an,temp_bn,current_offset);
-				if(notMatch){
-					current_offset+=r_length;
-					continue;
+				if(!v_tn.empty()){
+					bool notMatch = false;
+					judge(notMatch,v_tn,v_an,p_temp_bn,current_offset);
+					if(notMatch){
+						current_offset+=r_length;
+						continue;
+					}
 				}
-				delAndGetValue(del_ind,v_an,v_indexNum,m,temp_bn,current_offset);
-				current_offset+=r_length;
-			}
-		}
-		cout << endl << ' ' << count << " record(s) affected" << endl;
-		return del_ind;
-	}
-	else{
-		bool isEnd = false;
-		int b_counter = 0;
-		while(!isEnd) {
-			temp_bn = getBlock(0,table_name,b_counter++);
-			int current_offset = 0;
-			while (current_offset + r_length < 4096) {
-				int delOrUnwrite = 0;
-				temp_bn.readBlock(delOrUnwrite,4,current_offset);
-				if(delOrUnwrite==1){
-					current_offset+=r_length;
-					continue;
-				}
-				if(delOrUnwrite==2){
-					isEnd = true;
-					break;
-				}
-				delAndGetValue(del_ind,v_an,v_indexNum,m,temp_bn,current_offset);
+				
+				delAndGetValue(del_ind,v_an,v_indexNum,m,p_temp_bn,current_offset);
 				current_offset+=r_length;
 			}
 		}
@@ -515,14 +452,14 @@ vector <attrValue>& recordManager::select_attr(string table_name,vector <attrNod
 	int b_counter = 0;
 	int r_length = 4 + 4*v_an.size() + v_an.back().offset + v_an.back().length;
 	attrNode target_an = v_an[num];
-	bufferNode &temp_bn = getBlock(0, table_name, 0);
+	bufferNode *p_temp_bn = getBlockPointer(0, table_name, 0);
 	while(!isEnd){
-		bufferNode temp_bn = getBlock(0, table_name, b_counter++);
+		p_temp_bn = getBlockPointer(0, table_name, b_counter++);
 		int current_offset = 0;
 
 		while (current_offset + r_length < 4096){
 			int delOrUnwrite = 0;
-			temp_bn.readBlock(delOrUnwrite,4,current_offset);
+			p_temp_bn->readBlock(delOrUnwrite,4,current_offset);
 			if(delOrUnwrite==1){
 				current_offset+=r_length;
 				continue;
@@ -533,7 +470,7 @@ vector <attrValue>& recordManager::select_attr(string table_name,vector <attrNod
 			}
 			attrValue t_av(target_an.type,target_an.attrName,b_counter-1,current_offset);
 			int isNull;
-			temp_bn.readBlock(isNull,4,current_offset+4+4*num+target_an.offset);
+			p_temp_bn->readBlock(isNull,4,current_offset+4+4*num+target_an.offset);
 			if (isNull) {
 				t_av.value.isNull = true;
 			}
@@ -541,19 +478,19 @@ vector <attrValue>& recordManager::select_attr(string table_name,vector <attrNod
 				switch(target_an.type){
 				case 1:
 					int temp_int;
-					temp_bn.readBlock(temp_int,4,current_offset+4+4*(num+1)+target_an.offset);
+					p_temp_bn->readBlock(temp_int,4,current_offset+4+4*(num+1)+target_an.offset);
 					t_av.value.n = temp_int;
 					break;
 				case 2:
 				{
 					string temp_str;
-					temp_bn.readBlock(temp_str,target_an.length,current_offset+4+4*(num+1)+target_an.offset);
+					p_temp_bn->readBlock(temp_str,target_an.length,current_offset+4+4*(num+1)+target_an.offset);
 					t_av.value.s = temp_str;
 					break;
 				}
 				case 3:
 					float temp_f;
-					temp_bn.readBlock(temp_f,4,current_offset+4+4*(num+1)+target_an.offset);
+					p_temp_bn->readBlock(temp_f,4,current_offset+4+4*(num+1)+target_an.offset);
 					t_av.value.f = temp_f;
 					break;
 				default:
