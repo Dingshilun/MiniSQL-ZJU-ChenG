@@ -57,6 +57,7 @@ public:
 	void setKey(T x);
 	void setvalue(T x);
 	void setindex_info(index_info tmp);
+	void setType(int type);
 	string getTable();
 	strinng getAttribute();
 	index_info getIndexInfo();

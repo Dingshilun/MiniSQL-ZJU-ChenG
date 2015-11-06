@@ -7,13 +7,13 @@
 #include <vector>
 #include <string>
 #include <map>
-
+using namespace std;
 
 class BreakException{};
 class SyntaxException{
 public:
 	string errlog;
-	SyntaxException(string a): errlog(a) {}
+	SyntaxException(string a) : errlog(a) {}
 };
 
 
@@ -22,12 +22,18 @@ class Interpreter
 public:
 	Interpreter();
 	void readCommand(bool cmd);
+	void pipeline();
 	Interface parse();
 private:
 	set<char> token;
 	vector<string> statement;
-	//CatalogManager catalog;
+
 	map<string, int> op;
+	bool loop;
+	bool cmd;
+	int level;
+	CatalogManager catalog;
+	API api(catalog);
 private:
 	int split(string line);
 	void refresh();
