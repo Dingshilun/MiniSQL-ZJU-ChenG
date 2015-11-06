@@ -76,7 +76,11 @@ void bufferNode::flush()
 		out.open(this->fileName, ios::out | ios::in | ios::binary);
 		if (!out.good())
 			cerr << "file open error" << endl;
+<<<<<<< HEAD
 		out.seekp(ios::beg + this->offset*BLOCK_SIZE);
+=======
+		out.seekp(ios::beg+this->offset*BLOCK_SIZE);
+>>>>>>> 313ced2e1ed3e73b6e8146c54008286a3d1d93d9
 		out.write(dataField, BLOCK_SIZE);
 		out.close();
 	}
@@ -159,13 +163,25 @@ bufferNode& bufferManager::getBlock(int type, std::string filename, int offset)
 		{
 			usingBlock(i);
 			return bufferPool[i];
+<<<<<<< HEAD
 		}
+=======
+		}	
+>>>>>>> 313ced2e1ed3e73b6e8146c54008286a3d1d93d9
 	}
 	//full
 	int i = LRU();
 	bufferPool[i].setBufferNode(type, filename, offset);
 	usingBlock(i);
 	return bufferPool[i];
+<<<<<<< HEAD
+}
+
+bufferNode* bufferManager::getBlockPointer(int type, std::string filename, int offset)
+{
+	return &getBlock(type, filename, offset);
+=======
+>>>>>>> 313ced2e1ed3e73b6e8146c54008286a3d1d93d9
 }
 
 bufferNode* bufferManager::getBlockPointer(int type, std::string filename, int offset)

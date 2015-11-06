@@ -34,6 +34,25 @@ string makeBareIndexName(string tablename, string indexname)
 	return tablename + "-" + indexname;
 }
 
+string makeIndexName(string tablename, string indexname)
+{
+	return tablename + "-" + indexname + ".index";
+}
+string makeConfigName(string tablename, string indexname)
+{
+	return tablename + "-" + indexname + ".config";
+}
+
+string makeTableName(string tablename)
+{
+	return tablename + ".table";
+}
+
+string makeBareIndexName(string tablename, string indexname)
+{
+	return tablename + "-" + indexname;
+}
+
 void catalogManager::readCatalog()
 {
 	fstream logfile;
@@ -103,17 +122,28 @@ bool catalogManager::createTable(string tablename, list<attrNode> attrlist)
 
 bool catalogManager::createIndex(string indexname, string tablename, int columns)
 {
+<<<<<<< HEAD
 	fstream indexfile, configfile;
 	indexfile.open(makeIndexName(tablename, indexname), ios::in);
 	configfile.open(makeConfigName(tablename, indexname), ios::in);
 	if (indexfile.good() && configfile.good())//already exists
+=======
+	fstream indexfile,configfile;
+	indexfile.open(makeIndexName(tablename,indexname), ios::in);
+	configfile.open(makeConfigName(tablename, indexname), ios::in);
+	if (indexfile.good()&&configfile.good())//already exists
+>>>>>>> 313ced2e1ed3e73b6e8146c54008286a3d1d93d9
 	{
 		return false;
 	}
 	else
 	{
 		indexfile.close();
+<<<<<<< HEAD
 		indexfile.open(makeIndexName(tablename, indexname), ios::out);
+=======
+		indexfile.open(makeIndexName(tablename,indexname), ios::out);
+>>>>>>> 313ced2e1ed3e73b6e8146c54008286a3d1d93d9
 		indexfile.close();
 		configfile.close();
 		configfile.open(makeConfigName(tablename, indexname), ios::out);
@@ -132,7 +162,11 @@ bool catalogManager::createIndex(string indexname, string tablename, int columns
 				attrname = aite->attrName;
 			}
 		}
+<<<<<<< HEAD
 		indexNode node(tablename, indexname, attrname, columns);
+=======
+		indexNode node(tablename, indexname, attrname,columns);
+>>>>>>> 313ced2e1ed3e73b6e8146c54008286a3d1d93d9
 		this->indexList.push_back(node);
 		return true;
 	}
@@ -357,7 +391,11 @@ bool catalogManager::deleteIndex(string indexname, string tablename)
 		if (iite->tableName == tablename&&iite->attribute == indexname)
 		{
 			iite = this->indexList.erase(iite);
+<<<<<<< HEAD
 			string filename = makeIndexName(tablename, indexname);
+=======
+			string filename = makeIndexName(tablename,indexname);
+>>>>>>> 313ced2e1ed3e73b6e8146c54008286a3d1d93d9
 			remove(filename.c_str());
 		}
 		else
