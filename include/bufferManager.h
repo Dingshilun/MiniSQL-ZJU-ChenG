@@ -1,10 +1,10 @@
 /*
- pin为true的block在buffer满时不会被替换
- getBlock中的offset指第几个block
- 其余offset(block内的)全部指字节
- length也是字节
- type:table=0,index=1
- */
+pin为true的block在buffer满时不会被替换
+getBlock中的offset指第几个block
+其余offset(block内的)全部指字节
+length也是字节
+type:table=0,index=1
+*/
 
 #ifndef __BUFFERMANAGER__H
 #define __BUFFERMANAGER__H
@@ -51,7 +51,7 @@ protected:
 	int offset;
 	int type;
 	bool dirty;
-	
+
 };
 
 class bufferManager

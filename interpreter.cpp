@@ -26,10 +26,10 @@ void Interpreter::pipeline()
 			readCommand(cmd);
 			if (statement.size() == 0)
 				continue;
-			for (int i = 0; i < statement.size(); ++i)
+			/*for (int i = 0; i < statement.size(); ++i)
 				cout << statement[i] << ' ';
 			cout << endl;
-			Interface interface = parse();
+			*/Interface interface = parse();
 			api.exec(interface);
 
 		}
@@ -56,6 +56,14 @@ void Interpreter::pipeline()
 				cmd = true;
 			cin.rdbuf(backup);     // restore cin's original streambuf  
 			fin.close();
+		}
+		catch (ShowSomething e)
+		{
+			string thing = e.thing;
+			if (thing == "tables")
+				catalog.showTables();
+			else if (thing == "indexes")
+				catalog.showIndexes();
 		}
 		catch (BreakException be)
 		{
@@ -187,6 +195,8 @@ Interface Interpreter::parse()
 				throw SyntaxException("table \'" + statement[4] + "\' not found.");
 			if (catalog.doesIndexExist(statement[2]))
 				throw SyntaxException("index \'" + statement[2] + "\' has already existed.");
+			if (!regex_match(statement[2], regex("[_|a-z|A-Z](\\w*)")))
+				throw SyntaxException(string("\'") + statement[2] + "\' isn't a legal index name.");
 			if (!catalog.doesAttrExist(statement[4], statement[6]))
 				throw SyntaxException("column \'" + statement[6] + "\' not found");
 			attrNode attr = catalog.getAttrInfo(statement[4], statement[6]);
@@ -206,6 +216,8 @@ Interface Interpreter::parse()
 				throw SyntaxException("\'create table\' should be in the format: create table <table_name> ( <attr_list> [, primary key(attr_name)]).");
 			if (catalog.doesTableExist(statement[2]))
 				throw SyntaxException("table \'" + statement[2] + "\' has already existed.");
+			if (!regex_match(statement[2], regex("[_|a-z|A-Z](\\w*)")))
+				throw SyntaxException(string("\'") + statement[2] + "\' isn't a legal table name.");
 			vector<vector<string> > attributes;
 			//split to get attributes;
 			for (int i = 4; i < statement.size() - 1;){
@@ -305,6 +317,8 @@ Interface Interpreter::parse()
 		if (statement[1] == "table"){
 			if (!catalog.doesTableExist(statement[2]))
 				throw SyntaxException(string("table \'") + statement[2] + "\' not found.");
+			if (!regex_match(statement[2], regex("[_|a-z|A-Z](\\w*)")))
+				throw SyntaxException(string("\'") + statement[2] + "\' isn't a legal table name.");
 			else{
 				interface.setObject(MINI_TABLE);
 				interface.setTableName(statement[2]);
@@ -314,10 +328,11 @@ Interface Interpreter::parse()
 		else if (statement[1] == "index"){
 			if (!catalog.doesIndexExist(statement[2]))
 				throw SyntaxException(string("index \'") + statement[2] + "\' not found.");
-			else{
-				interface.setObject(MINI_INDEX);
-				interface.setIndexName(statement[2]);
-			}
+			if (!regex_match(statement[2], regex("[_|a-z|A-Z](\\w*)")))
+				throw SyntaxException(string("\'") + statement[2] + "\' isn't a legal table name that can be drop.");
+			interface.setObject(MINI_INDEX);
+			interface.setIndexName(statement[2]);
+			
 		}
 		else
 			throw SyntaxException(string("unknown identifier \'") + statement[1] + "\'.");
@@ -386,7 +401,7 @@ Interface Interpreter::parse()
 								 value = value * 10 + values[i][j] - 48;
 								 if (value > range) break;
 							 }
-							 if (i < values[i].size())
+							 if (j < values[i].size())
 								 throw SyntaxException(values[i] + " is out of range of INT.");
 							 u.n = (int)value;
 							 break;
@@ -407,7 +422,7 @@ Interface Interpreter::parse()
 								if (values[i].size() <= 1 || values[i][0] != '\'' || values[i][values[i].size() - 1] != '\'')
 									throw SyntaxException(values[i] + " can't be identified as a string.");
 								string s = values[i].substr(1, values[i].size() - 2);
-								attrNode attr = catalog.getAttrInfo(statement[2], values[i]);
+								attrNode attr = catalog.getAttrInfo(statement[2], iter->attrName);
 								int len = attr.length;
 								if (s.size() > len)
 									throw SyntaxException(values[i] + " is oversized.");
@@ -451,6 +466,19 @@ Interface Interpreter::parse()
 			throw statement[1];
 		}
 	}
+	else if (statement[0] == "show")
+	{
+		if (statement.size() != 2)
+			throw SyntaxException("\'show tables\' or \'show indexes\'.");
+		if (statement[1] == "tables"){
+			throw ShowSomething("tables");
+		}
+		else if (statement[1] == "indexes"){
+			throw ShowSomething("indexes");
+		}
+		else
+			throw SyntaxException("\'show tables\' or \'show indexes\'.");
+	}
 	else
 	{
 		throw SyntaxException(string("unknown operation \'") + statement[0] + "\'.");
@@ -473,7 +501,7 @@ void Interpreter::processCondition(string table, vector<string> &statement, int 
 			throw SyntaxException("there exists null condition in the statement");
 		if (condition.size() != 3 || !op.count(condition[1]))
 			throw SyntaxException("condition should be in format: <variable> <op> <value>.");
-		if (!catalog.doesAttrExist(statement[4], condition[0]))
+		if (!catalog.doesAttrExist(table, condition[0]))
 			throw SyntaxException(string("column \'") + condition[0] + "\' not found.");
 		//get attribute type
 		int type = catalog.getAttrType(table, condition[0]);

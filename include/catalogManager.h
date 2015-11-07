@@ -1,11 +1,6 @@
 /*
-<<<<<<< HEAD
 * 文件命名规则：tablename.table; tablename-indexname.index; tablename-indexname.config
 */
-=======
- * 文件命名规则：tablename.table; tablename-indexname.index; tablename-indexname.config
- */
->>>>>>> 313ced2e1ed3e73b6e8146c54008286a3d1d93d9
 
 #ifndef _catalogManager_h_
 #define _catalogManager_h_
@@ -20,11 +15,7 @@ public:
 	indexNode()
 	{
 	}
-<<<<<<< HEAD
 	indexNode(std::string tablename, std::string indexname, std::string attrname, int column)
-=======
-	indexNode(std::string tablename,std::string indexname,std::string attrname,int column)
->>>>>>> 313ced2e1ed3e73b6e8146c54008286a3d1d93d9
 	{
 		this->tableName = tablename;
 		this->indexName = indexname;
@@ -39,24 +30,14 @@ public:
 
 	friend std::ostream& operator<<(std::ostream& out, const indexNode& node)
 	{
-<<<<<<< HEAD
-	out << node.tableName << '\t' << node.indexName << '\t' << node.attribute << '\t' << node.column;
+	out << node.tableName << '\t' << node.indexName << '\t' << node.attribute << '\t' << node.column << endl;
 	return out;
-=======
-		out << node.tableName << '\t' << node.indexName << '\t' << node.attribute << '\t' << node.column;
-		return out;
->>>>>>> 313ced2e1ed3e73b6e8146c54008286a3d1d93d9
 	}
 
 	friend std::istream& operator>>(std::istream& in, indexNode& node)
 	{
-<<<<<<< HEAD
 	in >> node.tableName >> node.indexName >> node.attribute >> node.column;
 	return in;
-=======
-		in >> node.tableName >> node.indexName >> node.attribute >> node.column;
-		return in;
->>>>>>> 313ced2e1ed3e73b6e8146c54008286a3d1d93d9
 	}
 };
 
@@ -115,11 +96,7 @@ public:
 	virtual ~catalogManager();
 	void readCatalog();
 	void writeCatalog();
-<<<<<<< HEAD
 
-=======
-	
->>>>>>> 313ced2e1ed3e73b6e8146c54008286a3d1d93d9
 	//需要的接口
 	//1成功,0失败(返回bool)，-1不存在(如果返回值int)
 	bool createTable(string tablename, list<attrNode> attrlist);
@@ -135,18 +112,17 @@ public:
 	int getAttrNum(string tablename, string attrname);
 	list<attrNode> getAttrList(string tablename);
 	attrNode getAttrInfo(string tablename, string attrname);
-<<<<<<< HEAD
 	list<string> getIndexOfTable(string tablename);
-=======
-	list<string> getIndexOfTable(string tablename); 
->>>>>>> 313ced2e1ed3e73b6e8146c54008286a3d1d93d9
 	string getIndexByAttrID(string tablename, int column);//若不存在返回值为""
+	string getIndexFileByIndexName(string indexname);
 	int getRecordNum(string tablename);//返回条目数量
 	bool deleteTable(string tablename);
-	bool deleteIndex(string indexname, string tablename);
+	//bool deleteIndex(string indexname, string tablename);
+	bool deleteIndex(string indexname);
 	bool recordDelete(string tablename, int num);//删除条目数量，删除成功返回1
 	bool recordAdd(string tablename, int num);
-
+	void showTables();
+	void showIndexes();
 };
 
 

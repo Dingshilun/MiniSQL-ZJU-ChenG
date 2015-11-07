@@ -10,7 +10,11 @@
 #include <string>
 #include <map>
 using namespace std;
-
+class ShowSomething{
+public:
+	string thing;
+	ShowSomething(string a):thing(a){}
+};
 class BreakException{};
 class SyntaxException{
 public:

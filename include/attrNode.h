@@ -8,5 +8,9 @@ typedef struct AattrNode
 	bool isPrimary, isUnique, hasIndex;
 	int length, type, offset;//type={MINI_FLOAT,MINI_INT,MINI_STRING}
 	string attrName;
+	AattrNode() :isPrimary(0), isUnique(0), hasIndex(0), length(0), type(0), offset(0), attrName("")
+	{
+	
+	}
 }attrNode;
 #endif

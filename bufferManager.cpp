@@ -50,8 +50,10 @@ void bufferNode::setBufferNode(int type, std::string filename, int offset)
 {
 	flush();
 	dataField = new char[BLOCK_SIZE];
-	cerr << "set bn " << hex << (int)dataField << endl;
+	//cerr << "set bn " << hex << (int)dataField << endl;
 	memset(dataField, 0, BLOCK_SIZE);
+	int del = 2;
+	memcpy(dataField, (char*)&del, 4);
 	this->fileName = filename;
 	this->offset = offset;
 	this->type = type;
@@ -76,11 +78,7 @@ void bufferNode::flush()
 		out.open(this->fileName, ios::out | ios::in | ios::binary);
 		if (!out.good())
 			cerr << "file open error" << endl;
-<<<<<<< HEAD
 		out.seekp(ios::beg + this->offset*BLOCK_SIZE);
-=======
-		out.seekp(ios::beg+this->offset*BLOCK_SIZE);
->>>>>>> 313ced2e1ed3e73b6e8146c54008286a3d1d93d9
 		out.write(dataField, BLOCK_SIZE);
 		out.close();
 	}
@@ -132,7 +130,7 @@ void bufferManager::usingBlock(int i)
 
 int bufferManager::LRU()
 {
-	cerr << "LRU" << this->minAge << endl;
+	//cerr << "LRU" << this->minAge << endl;
 	return this->minIndex;
 }
 
@@ -140,7 +138,7 @@ bufferNode& bufferManager::getBlock(int type, std::string filename, int offset)
 {
 	this->lruBase = false;
 
-	for (int i = 0; i < BLOCK_SIZE; ++i)
+	for (int i = 0; i < MAX_BLOCK; ++i)
 	{
 		if (bufferPool[i].isEmpty())
 		{
@@ -163,25 +161,13 @@ bufferNode& bufferManager::getBlock(int type, std::string filename, int offset)
 		{
 			usingBlock(i);
 			return bufferPool[i];
-<<<<<<< HEAD
 		}
-=======
-		}	
->>>>>>> 313ced2e1ed3e73b6e8146c54008286a3d1d93d9
 	}
 	//full
 	int i = LRU();
 	bufferPool[i].setBufferNode(type, filename, offset);
 	usingBlock(i);
 	return bufferPool[i];
-<<<<<<< HEAD
-}
-
-bufferNode* bufferManager::getBlockPointer(int type, std::string filename, int offset)
-{
-	return &getBlock(type, filename, offset);
-=======
->>>>>>> 313ced2e1ed3e73b6e8146c54008286a3d1d93d9
 }
 
 bufferNode* bufferManager::getBlockPointer(int type, std::string filename, int offset)

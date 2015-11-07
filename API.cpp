@@ -5,6 +5,7 @@
 #include"string"
 #include"iostream"
 #include<algorithm>
+#include<time.h>
 #include"recordManager.h"
 using namespace std;
 class ERROR{};
@@ -51,9 +52,11 @@ attrNode API::getAttName(string tablename, int column)
 	}
 	return *it;
 }
+int insert_count = 0;
 int API::exec(Interface inter)
 {
-	cout << "enterint API!!!!" << endl;
+	clock_t tbegin = clock();
+	//cout << "enterint API!!!!" << endl;
 	int op = inter.whichOperation();
 	string tablename = inter.getTableName();
 	vector<attrNode> tableAttr;
@@ -102,7 +105,11 @@ int API::exec(Interface inter)
 			break;
 		case MINI_INDEX:
 			/*delete the index */
-			dropIndex(inter.getIndexName(), inter.getTableName());
+			switch (dropIndex(inter.getIndexName(), inter.getTableName()))
+			{
+			case 1:cout << "success!" << endl; break;
+			default: cout << "ERROR" << endl;
+			}
 			break;
 		}
 		break;
@@ -118,15 +125,23 @@ int API::exec(Interface inter)
 						switch (result){
 						case -1:cout << "abort because of duplication!" << endl;
 							break;
-						case 1:cout << "insert successfully!" << endl;
+						case 1:cout << "insert successfully!" <<insert_count<< endl;
+								insert_count++;
 						}
 						break;
 	}
 	case MINI_DELETE:
 		int count = Delete(tablename, inter.getConditions());
-		cout << "The amount deleted:" << count << endl;
+		switch (count){
+		case -2:cout << "No tuples deleted!" << endl; break;
+		default:	cout << "The amount deleted:" << count << endl;
+		}
 		break;
 	}
+	//indexmanager.flushAll();
+	//record_manager_.flushAll();
+	clock_t tend = clock();
+	cout << "Query finished in " << (tend - tbegin) / 1000.0 << " seconds" << endl;
 	return 0;
 }
 template<class T>
@@ -157,6 +172,7 @@ int API::createTable(string tablename, vector<attrNode> attributes)  //throw(alr
 	//0 means existed,-1 creation failure, 1 success
 	cout << "entering create table!" << endl;
 	int flag = catlog.doesTableExist(tablename);
+	cout << "table flag " << flag << endl;
 	if (flag)
 		return 0;//existed
 	else
@@ -172,9 +188,11 @@ int API::createTable(string tablename, vector<attrNode> attributes)  //throw(alr
 				{
 				case MINI_FLOAT:
 					offset += 4;
+					att_it->length = 4;
 					break;
 				case MINI_INT:
 					offset += 4;
+					att_it->length = 4;
 					break;
 				case MINI_STRING:
 					offset += att_it->length;
@@ -193,11 +211,11 @@ int API::createTable(string tablename, vector<attrNode> attributes)  //throw(alr
 					{
 						//catlog.createIndex(tablename + ' ' + it->attrName, tablename, column);
 						cout << "now creating index" << endl;
-						return (createIndex(tablename, tablename + '.' + it->attrName, it->attrName, column));
+						return (createIndex(tablename, it->attrName, it->attrName, column));
 					}
 					column++;
 				}
-				return -1;
+				return -2;
 			}
 			else {
 				cout << "createTable in catalog failure" << endl;
@@ -225,31 +243,28 @@ int API::createIndex(string tablename, string indexname, string attribute, int c
 			use b+tree to build the index
 			*/
 			indexname = catlog.getIndexByAttrID(tablename, column);
-			/*attrNode attrPro = getAttName(tablename,column);
+			attrNode attrPro = getAttName(tablename,column);
+			
+			Target<float> tmp1(indexname); 
+			Target<int> tmp2(indexname);
+			Target<string> tmp3(indexname);
 			switch (attrPro.type)
 			{//for different type , create a corressponding index.
 			case MINI_FLOAT:
-			Target<float> tmp1(indexname);
-			indexmanager.createIndex(tmp1, indexname);
+			indexmanager.createIndex(tmp1);
 			break;
 			case MINI_INT:
-			Target<int> tmp2(tablename, attribute);
-			tmp2.setTable(tablename);
-			tmp2.setAttribute(attribute);
-			indexmanager.createIndex(tmp2, indexname);
+			indexmanager.createIndex(tmp2);
 			break;
 			case MINI_STRING:
-			Target<string> tmp3(tablename, attribute);
-			tmp3.setTable(tablename);
-			tmp3.setAttribute(attribute);
-			indexmanager.createIndex(tmp3, indexname);
+			indexmanager.createIndex(tmp3);
 			break;
-			}*/
+			}
 			/*after creation,insert all the value already exists*/
 			attrNode attr_property = getAttName(tablename, column);
 			vector<attrNode>attr_list = ListToVector(catlog.getAttrList(tablename));
 			cout << "selecting from recordManager!" << endl;
-			/*vector<attrValue> all_tuples = record_manager_.select_attr(tablename, attr_list, column);
+			vector<attrValue> all_tuples = record_manager_.select_attr(tablename, attr_list, column);
 			cout << "selecting finish" << endl;
 			vector<attrValue>::iterator tuples = all_tuples.begin();//get all the values in the attribute
 			cout << "inserting to index" << endl;
@@ -276,8 +291,9 @@ int API::createIndex(string tablename, string indexname, string attribute, int c
 					indexmanager.insert(tmp3);
 					break;
 				}
-			}*/
+			}
 			//may need this sentence
+			
 			cout << "create index successfully" << endl;
 		}
 		catch (ERROR)
@@ -334,7 +350,7 @@ int API::Insert(string tablename, vector<Union> data)
 					tmp_str.setType(SINGLE);
 					tmp_str.setKey(data[i].s);
 					exist = indexmanager.search(tmp_str);
-					if (!exist.empty()) { cout << "the " << attr.attrName << "can't have duplicate value!" << endl; return -1; }//already exists
+					if (!exist.empty()) { cout << "the " << attr.attrName << " can't have duplicate value!" << endl; return -1; }//already exists
 					break;
 				case MINI_INT:
 					tmp_int.setType(SINGLE);
@@ -353,19 +369,19 @@ int API::Insert(string tablename, vector<Union> data)
 			}
 			attlist.push_back(tmp);
 		}
-		index_info tmp_index = record_manager_.insert(tablename, attlist);
+		index_info tmp_index = record_manager_.insert(tablename, attlist,ListToVector<attrNode>(catlog.getAttrList(tablename)));
 		//insert the tuple into indexmanager
 		vector<attrAndvalue>::iterator insert_it = attlist.begin();
 		int i = 0;
 		for (; insert_it != attlist.end(); insert_it++, i++)
 		{
-			string indexname = catlog.getIndexByAttrID(tablename, i++);
+			string indexname = catlog.getIndexByAttrID(tablename, i);
 			if (indexname != "")//test if already exists
 			{
 				Target<string> tmp_str(indexname);
 				Target<int> tmp_int(indexname);
 				Target<float> tmp_float(indexname);
-				switch (attr.type){
+				switch (insert_it->type){
 				case MINI_STRING:
 					tmp_str.setType(SINGLE);
 					tmp_str.setKey(data[i].s);
@@ -387,8 +403,8 @@ int API::Insert(string tablename, vector<Union> data)
 				}
 			}
 			catlog.recordAdd(tablename, 1);
-			return 1;//success
 		}
+		return 1;
 	}
 	catch (ERROR)
 	{
@@ -404,9 +420,11 @@ int API::Delete(string tablename, vector<TreeNode> conditions)
 		vector<TreeNode>::iterator	it = conditions.begin();
 		vector<vector<index_info>> indexs;
 		string indexname;
-		for (; it != conditions.end(); it++)
+		int flag = 0;
+		for (; it != conditions.end();)
 		{
-			if (it->op != 1){
+			flag = 1;
+			if (it->op != NE){
 				//if the operation is not inequal
 				//find the index
 				indexname = catlog.getIndexByAttrID(tablename, it->id);
@@ -419,27 +437,27 @@ int API::Delete(string tablename, vector<TreeNode> conditions)
 					Target<int> tmpInt(indexname);
 					switch (it->op)//set the operation
 					{
-					case 0://:=
+					case EQU://:=
 						tmpStr.setType(SINGLE);
 						tmpLF.setType(SINGLE);
 						tmpInt.setType(SINGLE);
 						break;
-					case 2://:<
+					case GT://:>
 						tmpStr.setType(LARGER);
 						tmpLF.setType(LARGER);
 						tmpInt.setType(LARGER);
 						break;
-					case 3://:>
+					case LT://:<
 						tmpStr.setType(LESS);
 						tmpLF.setType(LESS);
 						tmpInt.setType(LESS);
 						break;
-					case 4://:<=
+					case LE://:<=
 						tmpStr.setType(NOTLARGER);
 						tmpLF.setType(NOTLARGER);
 						tmpInt.setType(NOTLARGER);
 						break;
-					case 5://:>=
+					case GE://:>=
 						tmpStr.setType(NOTLESS);
 						tmpLF.setType(NOTLESS);
 						tmpInt.setType(NOTLESS);
@@ -469,12 +487,14 @@ int API::Delete(string tablename, vector<TreeNode> conditions)
 					}
 				}
 			}
+			if (it != conditions.end()) it++;
 		}
 		/*finishing finding the indexs in indexmanager*/
 		//select from recordmanager
 		vector<attrNode> attr = ListToVector(catlog.getAttrList(tablename));
 		vector<index_info> merge_result;
 		if (!indexs.empty()) merge_index(indexs, merge_result);
+		if (flag&&conditions.empty() && merge_result.empty()) return -2;
 		/*
 		delete the record using the recordmanager.
 		*/
@@ -541,6 +561,13 @@ int API::dropTable(string tablename)
 		}*/
 		//delete the infomation in catalogManager
 		cout << "dorping table" << endl;
+		list<string> tmp = catlog.getIndexOfTable(tablename);
+		list<string>::iterator it = tmp.begin();
+		for (; it != tmp.end(); it++)
+		{
+			Target<int> tt(*it);
+			indexmanager.drop(tt);
+		}
 		return catlog.deleteTable(tablename);
 		
 	}
@@ -552,7 +579,10 @@ int API::dropIndex(string indexname, string tablename)
 		/*delete index from indexmanager*/
 		//indexmanager.deleteIndex(indexname);
 		/*delete index from catalog*/
-		return catlog.deleteIndex(indexname, tablename);
+		string name = catlog.getIndexFileByIndexName(indexname);
+		Target<int> a(name);
+		indexmanager.drop(a);
+		return catlog.deleteIndex(indexname);
 	}
 	catch (ERROR)
 	{
@@ -565,9 +595,11 @@ int API::Select(string tablename, vector<TreeNode> conditions)
 		vector<TreeNode>::iterator	it = conditions.begin();
 		vector<vector<index_info>> indexs;
 		string indexname;
-		for (; it != conditions.end(); it++)
+		int flag = 0;
+		for (; it != conditions.end();)
 		{
-			if (it->op != 1){
+			flag = 1;
+			if (it->op != NE){
 				//if the operation is not inequal
 				//find the index
 				indexname = catlog.getIndexByAttrID(tablename, it->id);
@@ -580,27 +612,27 @@ int API::Select(string tablename, vector<TreeNode> conditions)
 					Target<int> tmpInt(indexname);
 					switch (it->op)//set the operation
 					{
-					case 0://:=
+					case EQU://:=
 						tmpStr.setType(SINGLE);
 						tmpLF.setType(SINGLE);
 						tmpInt.setType(SINGLE);
 						break;
-					case 2://:<
-						tmpStr.setType(LARGER);
-						tmpLF.setType(LARGER);
-						tmpInt.setType(LARGER);
-						break;
-					case 3://:>
+					case LT://:<
 						tmpStr.setType(LESS);
 						tmpLF.setType(LESS);
 						tmpInt.setType(LESS);
 						break;
-					case 4://:<=
+					case GT://:>
+						tmpStr.setType(LARGER);
+						tmpLF.setType(LARGER);
+						tmpInt.setType(LARGER);
+						break;
+					case LE://:<=
 						tmpStr.setType(NOTLARGER);
 						tmpLF.setType(NOTLARGER);
 						tmpInt.setType(NOTLARGER);
 						break;
-					case 5://:>=
+					case GE://:>=
 						tmpStr.setType(NOTLESS);
 						tmpLF.setType(NOTLESS);
 						tmpInt.setType(NOTLESS);
@@ -630,15 +662,19 @@ int API::Select(string tablename, vector<TreeNode> conditions)
 					}
 				}
 			}
+			if (it != conditions.end()) it++;
 		}
 		/*finishing finding the indexs in indexmanager*/
 		//select from recordmanager
 		vector<attrNode> attr = ListToVector(catlog.getAttrList(tablename));
 		vector<index_info> merge_result;
 		if (!indexs.empty())merge_index(indexs, merge_result);
-		int select_number = record_manager_.select(tablename, conditions, attr, merge_result);
+		if (flag&&conditions.empty() && merge_result.empty())
+			cout << "select: 0 rows affect(s)" << endl;
+		else
+			record_manager_.select(tablename, conditions, attr, merge_result);
 		//get the number selected
-		return select_number;
+		return record_manager_.getCount();
 	}
 	catch (ERROR)
 	{

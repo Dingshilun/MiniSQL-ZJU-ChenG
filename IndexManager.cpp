@@ -30,19 +30,16 @@ int IndexManager::createBplusTree(TargetInt t)
 	string iName = name + ".index";
 	string cName = name + ".config";
 
-	if (_access(iName.c_str(), F_OK) == 0)
+/*	if (_access(iName.c_str(), F_OK) == 0)
 	{
 		cout << "The index file has already existed!" << endl;
 		return -1;
-	}
-	else
+	}*/
+	
 	{
 		FILE* BFile;
 		FILE* configFile;
-		if ((BFile = fopen(iName.c_str(), "wb+")))
-		{
-			if ((configFile = fopen(cName.c_str(), "wb+")))
-			{
+	
 				fileName = name;
 				indexFileName = iName;
 				configFileName = cName;
@@ -64,23 +61,10 @@ int IndexManager::createBplusTree(TargetInt t)
 
 				rootTable[fileName] = root;
 
-				fclose(BFile);
-				fclose(configFile);
 
 				return 0;
 
-			}
-			else
-			{
-				cout << "Cannot create the index config file!" << endl;
-				return -1;
-			}
-		}
-		else
-		{
-			cout << "Cannot create the index file!" << endl;
-			return -1;
-		}
+			
 	}
 }
 
@@ -92,19 +76,7 @@ int IndexManager::createBplusTree(TargetFloat t)
 	string iName = name + ".index";
 	string cName = name + ".config";
 
-	if (_access(iName.c_str(), F_OK) == 0)
-	{
-		cout << "The index file has already existed!" << endl;
-		return -1;
-	}
-	else
-	{
-		FILE* BFile;
-		FILE* configFile;
-		if ((BFile = fopen(iName.c_str(), "wb+")))
-		{
-			if ((configFile = fopen(cName.c_str(), "wb+")))
-			{
+
 				fileName = name;
 				indexFileName = iName;
 				configFileName = cName;
@@ -125,24 +97,10 @@ int IndexManager::createBplusTree(TargetFloat t)
 
 				rootTable[fileName] = root;
 
-				fclose(BFile);
-				fclose(configFile);
 
 				return 0;
 
-			}
-			else
-			{
-				cout << "Cannot create the index config file!" << endl;
-				return -1;
-			}
-		}
-		else
-		{
-			cout << "Cannot create the index file!" << endl;
-			return -1;
-		}
-	}
+		
 }
 
 int IndexManager::createBplusTree(TargetChar t)
@@ -152,20 +110,7 @@ int IndexManager::createBplusTree(TargetChar t)
 	string name = t.indexFileName;
 	string iName = name + ".index";
 	string cName = name + ".config";
-
-	if (_access(iName.c_str(), F_OK) == 0)
-	{
-		cout << "The index file has already existed!" << endl;
-		return -1;
-	}
-	else
-	{
-		FILE* BFile;
-		FILE* configFile;
-		if ((BFile = fopen(iName.c_str(), "wb+")))
-		{
-			if ((configFile = fopen(cName.c_str(), "wb+")))
-			{
+	
 				fileName = name;
 				indexFileName = iName;
 				configFileName = cName;
@@ -187,24 +132,10 @@ int IndexManager::createBplusTree(TargetChar t)
 
 				rootTable[fileName] = root;
 
-				fclose(BFile);
-				fclose(configFile);
-
+				
 				return 0;
 
-			}
-			else
-			{
-				cout << "Cannot create the index config file!" << endl;
-				return -1;
-			}
-		}
-		else
-		{
-			cout << "Cannot create the index file!" << endl;
-			return -1;
-		}
-	}
+		
 }
 
 
@@ -579,7 +510,7 @@ void IndexManager::insertKey(ADDRESS current, TargetChar& tar)
 			x.Pointer[j] = x.Pointer[j - 1];
 		}
 		// x.key[i] = tar.key;
-		memcpy(x.key[i], tar.key.c_str(), sizeof(tar.key.c_str()));
+		memcpy(x.key[i], tar.key.c_str(), tar.key.length());
 		x.nkey++;
 
 		//将记录的地址赋给x.Pointer[i]

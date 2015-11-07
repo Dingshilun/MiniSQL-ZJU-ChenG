@@ -115,7 +115,7 @@ struct TargetChar
 };
 
 class IndexManager : public bufferManager
-{
+{ 
 private: //B+ tree data and operation
 	map< string, ADDRESS > rootTable;
 	string fileName;
@@ -203,10 +203,25 @@ public:
 	template<class T>
 	void switchTree(Target<T>);
 
+	template<class T>
+	void drop( Target<T> t );
 };
 
 
-
+template<class T>
+void IndexManager::drop( Target<T> t )
+{
+    if( fileName == t.getIndexFileName() )
+    {
+        root = -1;
+        fileName = "";
+        indexFileName = "";
+        configFileName = "";
+        rootTable.erase( fileName );
+    }
+    else if( rootTable.count( t.getIndexFileName() ) == 1 )
+        rootTable.erase( t.getIndexFileName() );
+}
 template<class T>
 int IndexManager::createIndex(Target<T> t)
 {
