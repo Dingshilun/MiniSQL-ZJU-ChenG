@@ -1,4 +1,4 @@
-#include "stdafx.h"
+//#include "stdafx.h"
 #include "catalogManager.h"
 #include <fstream>
 #include <iostream>
@@ -112,13 +112,6 @@ bool catalogManager::createIndex(string indexname, string tablename, int columns
 	}
 	else
 	{
-		indexfile.close();
-		indexfile.open(makeIndexName(tablename, indexname), ios::out);
-		indexfile.close();
-		configfile.close();
-		configfile.open(makeConfigName(tablename, indexname), ios::out);
-		configfile.close();
-		//find attrName of column
 		string attrname;
 		list<TableNode>::iterator tite;
 		list<AattrNode>::iterator aite;
@@ -135,6 +128,17 @@ bool catalogManager::createIndex(string indexname, string tablename, int columns
 					indexname = string("$") + indexname;
 			}
 		}
+//		indexfile.close();
+//		indexfile.open(makeIndexName(tablename, indexname), ios::out);
+//		indexfile.close();
+//		configfile.close();
+//		configfile.open(makeConfigName(tablename, indexname), ios::out);
+//		configfile.close();
+        string iName = makeIndexName(tablename, indexname);
+        string cName = makeConfigName(tablename, indexname);
+        fopen( iName.c_str(), "wb+" );
+        fopen( cName.c_str(), "wb+" );
+		//find attrName of column
 		indexNode node(tablename, indexname, attrname, columns);
 		this->indexList.push_back(node);
 		return true;
@@ -173,6 +177,7 @@ indexNode catalogManager::findindex(string indexname, string tablename)
 		if (iite->indexName == indexname&&iite->tableName == tablename)
 			return *iite;
 	}
+    return *iite;
 }
 
 bool catalogManager::doesAttrExist(string tablename, string attrname)
@@ -277,6 +282,7 @@ list<attrNode> catalogManager::getAttrList(string tablename)
 			return tite->attrList;
 		}
 	}
+    return tite->attrList;
 }
 
 attrNode catalogManager::getAttrInfo(string tablename, string attrname)
@@ -294,6 +300,7 @@ attrNode catalogManager::getAttrInfo(string tablename, string attrname)
 			}
 		}
 	}
+    return *aite;
 }
 
 list<string> catalogManager::getIndexOfTable(string tablename)

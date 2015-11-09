@@ -1,4 +1,4 @@
-#include "stdafx.h"
+//#include "stdafx.h"
 #include "bufferManager.h"
 #include <iostream>
 #include <fstream>
@@ -49,6 +49,7 @@ bufferManager::~bufferManager()
 void bufferNode::setBufferNode(int type, std::string filename, int offset)
 {
 	flush();
+    delete[] dataField;
 	dataField = new char[BLOCK_SIZE];
 	//cerr << "set bn " << hex << (int)dataField << endl;
 	memset(dataField, 0, BLOCK_SIZE);
