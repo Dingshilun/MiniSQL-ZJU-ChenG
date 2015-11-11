@@ -171,7 +171,7 @@ int  IndexManager::switchBplusTree(string name)
 		else
 		{
 			string iName = name + ".index";
-			if (access(iName.c_str(), F_OK) == 0)
+			if (_access(iName.c_str(), F_OK) == 0)
 			{
 				fileName = name;
 				indexFileName = iName;
@@ -511,7 +511,7 @@ void IndexManager::insertKey(ADDRESS current, TargetChar& tar)
 		}
 		// x.key[i] = tar.key;
 		memcpy(x.key[i], tar.key.c_str(), tar.key.length());
-        x.key[i][tar.key.length()] = '\0';
+		x.key[i][tar.key.length()] = '\0';
 		x.nkey++;
 
 		//将记录的地址赋给x.Pointer[i]

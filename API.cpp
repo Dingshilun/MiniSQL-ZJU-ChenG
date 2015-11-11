@@ -214,8 +214,7 @@ int API::createTable(string tablename, vector<attrNode> attributes)  //throw(alr
                 {
                     if (it->isPrimary)
                     {
-                        //catlog.createIndex(tablename + ' ' + it->attrName, tablename, column);
-                        cout << "now creating index" << endl;
+			cout << "now creating index" << endl;
                         return (createIndex(tablename, it->attrName, it->attrName, column));
                     }
                     column++;
@@ -234,18 +233,18 @@ int API::createTable(string tablename, vector<attrNode> attributes)  //throw(alr
     }
 }
 int API::createIndex(string tablename, string indexname, string attribute, int column)//throw(alreadyExist,CreationFailureOnBplus)
-{
+{ 
     int flag = catlog.doesIndexExist(indexname);
     if (flag)
         return 0;//existed
     else
-    {
+    { 
         try
-        {
+        { 
             flag = 0;
             if (!catlog.createIndex(indexname, tablename, column))
                 return -1;
-            /*
+            /* 
              use b+tree to build the index
              */
             indexname = catlog.getIndexByAttrID(tablename, column);
@@ -255,7 +254,7 @@ int API::createIndex(string tablename, string indexname, string attribute, int c
             Target<int> tmp2(indexname);
             Target<string> tmp3(indexname);
             switch (attrPro.type)
-            {//for different type , create a corressponding index.
+            {//for different t ype , create a corressponding index.
                 case MINI_FLOAT:
                     indexmanager.createIndex(tmp1);
                     break;
@@ -275,12 +274,13 @@ int API::createIndex(string tablename, string indexname, string attribute, int c
             vector<attrValue>::iterator tuples = all_tuples.begin();//get all the values in the attribute
             cout << "inserting to index" << endl;
             for (; tuples != all_tuples.end(); tuples++)
-            {
+            { 
+		//insert all the tuples already exist in the table
                 Target<float> tmp1(indexname);
                 Target<int> tmp2(indexname);
                 Target<string> tmp3(indexname);
                 switch (attr_property.type)
-                {
+                { 
                     case MINI_FLOAT:
                         tmp1.setKey(tuples->value.f);
                         tmp1.setIndex_info(tuples->ii);
@@ -298,7 +298,6 @@ int API::createIndex(string tablename, string indexname, string attribute, int c
                         break;
                 }
             }
-            //may need this sentence
             
             cout << "create index successfully" << endl;
         }
@@ -309,17 +308,17 @@ int API::createIndex(string tablename, string indexname, string attribute, int c
     return 1;
 }
 int API::Insert(string tablename, vector<Union> data)
-{
-    /*insert the record into the recordmanager*/
-    try{
-        /*find the unique and primary value in index
+{ 
+    /*insert the record into the recordmanager£¬and corresbonding indices*/
+    try{ 
+        /*find  the unique and primary value in index
          if they already exist,abort,if not,change the property unique or primary to false.
          If there is no index, send it to recordmanager to linear scan.
          */
         vector<attrAndvalue> attlist;
         attrNode attr;
         for (int i = 0; i < data.size(); i++)
-        {
+        { 
             //transfer the attNode and Union to attrAndvalue
             attrAndvalue tmp;
             attr = getAttName(tablename, i);
@@ -329,9 +328,9 @@ int API::Insert(string tablename, vector<Union> data)
             tmp.length = attr.length;
             if (data[i].isNull) tmp.isNull = 1;
             else
-            {
+            { 
                 switch (attr.type)
-                {
+                 {
                     case MINI_INT:
                         tmp.int_value = data[i].n;
                         break;
@@ -346,12 +345,12 @@ int API::Insert(string tablename, vector<Union> data)
             }
             string indexname = catlog.getIndexByAttrID(tablename, i);
             if (tmp.isPrimary&&indexname != "" || tmp.isUnique&&indexname != "")//test if already exists
-            {
+            { //try to find if the value is duplicated in indexmanager
                 Target<string> tmp_str(indexname);
                 Target<int> tmp_int(indexname);
                 Target<float> tmp_float(indexname);
                 vector<index_info> exist;
-                switch (attr.type){
+                swi tch (attr.type){
                     case MINI_STRING:
                         tmp_str.setType(SINGLE);
                         tmp_str.setKey(data[i].s);
@@ -374,16 +373,17 @@ int API::Insert(string tablename, vector<Union> data)
                 tmp.isPrimary = tmp.isUnique = 0;
             }
             else
-            {
+            { 
                 if (tmp.isUnique&&indexname == "")
-                {
+                { 
+		    //try to find if the value is duplicated by getting all the values in table and traversing them
                     vector<attrNode> tttmp = ListToVector(catlog.getAttrList(tablename));
                     vector<attrValue> all_tuples = record_manager_.select_attr(tablename, tttmp, i);
                     vector<attrValue>::iterator tuple = all_tuples.begin();
                     for (; tuple != all_tuples.end(); tuple++)
-                    {
+                     {
                         switch (attr.type)
-                        {
+                         {
                             case MINI_INT:
                                 if (data[i].n == tuple->value.n) { cout << "the " << attr.attrName << "can't have duplicate value!"; return -1; }
                                 break;
@@ -401,19 +401,19 @@ int API::Insert(string tablename, vector<Union> data)
             attlist.push_back(tmp);
         }
         vector<attrNode> zkw = ListToVector<attrNode>(catlog.getAttrList(tablename));
-        index_info tmp_index = record_manager_.insert(tablename, attlist, zkw);
+	index_info tmp_index = record_manager_.insert(tablename, attlist, zkw);
         //insert the tuple into indexmanager
         vector<attrAndvalue>::iterator insert_it = attlist.begin();
         int i = 0;
         for (; insert_it != attlist.end(); insert_it++, i++)
-        {
+        { 
             string indexname = catlog.getIndexByAttrID(tablename, i);
-            if (indexname != "")//test if already exists
-            {
+            if (indexname != "")//insert the new tuple into the corressponding indices
+            { 
                 Target<string> tmp_str(indexname);
                 Target<int> tmp_int(indexname);
                 Target<float> tmp_float(indexname);
-                switch (insert_it->type){
+                switch (insert_it->type){ 
                     case MINI_STRING:
                         tmp_str.setType(SINGLE);
                         tmp_str.setKey(data[i].s);
